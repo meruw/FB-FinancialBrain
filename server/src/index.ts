@@ -15,7 +15,7 @@ app.use((req, _res, next) => {
 });
 
 // Health check
-app.get('/health', (_req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     demoMode: env.DEMO_MODE,
