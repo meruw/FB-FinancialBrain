@@ -1,0 +1,53 @@
+{
+  "customerId": "NOBRANCHES",
+  "learningSince": "2025-10-01",
+  "sessionsAnalyzed": 7,
+  "vendorProfiles": [
+    {
+      "vendor": "CONSTRUTECH",
+      "avgPostingDelay": 4.2,
+      "commonIssue": "date_tolerance_miss",
+      "occurrencesLast6Months": 4,
+      "recommendedTolerance": 5,
+      "matchSuccessRate": 0.73
+    },
+    {
+      "vendor": "BRAUTOTEST",
+      "avgPostingDelay": 1.1,
+      "commonIssue": "sap_already_matched",
+      "occurrencesLast6Months": 5,
+      "recommendedTolerance": 3,
+      "matchSuccessRate": 0.61
+    },
+    {
+      "vendor": "ACME_LOGISTICS",
+      "avgPostingDelay": 2.4,
+      "commonIssue": "amount_mismatch",
+      "occurrencesLast6Months": 2,
+      "recommendedTolerance": 3,
+      "matchSuccessRate": 0.88
+    }
+  ],
+  "accountPatterns": {
+    "Main Checking": {
+      "avgCloseTime": 47,
+      "typicalMonthlyFees": 2,
+      "historicalCloseRate": 0.89
+    },
+    "Operating Account": {
+      "avgCloseTime": 62,
+      "typicalMonthlyFees": 4,
+      "historicalCloseRate": 0.82
+    }
+  },
+  "closeProbability": {
+    "current": 0.72,
+    "blockers": [
+      "3 CONSTRUTECH date tolerance misses",
+      "1 BRAUTOTEST SAP entry conflict",
+      "2 unclassified bank fees",
+      "1 duplicate payment risk"
+    ],
+    "formula": "Historical close rate of past sessions with this exception profile in the last 6 months. The AI analyzes the pattern; it does not invent the number."
+  }
+}

@@ -1,0 +1,85 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { logger } from '../utils/logger.js';
+
+/**
+ * The Financial Brain.
+ *
+ * This is the central context object that gets injected into EVERY AI call.
+ * It's what makes the demo feel like the system "remembers" things about the
+ * customer. Without this, every feature produces generic output.
+ *
+ * For the hackathon: read once from data/financial-brain.json on demand.
+ * In production: this would be backed by a DB per customer, updated after
+ * each session. The shape stays the same.
+ *
+ * Keep this file as the ONLY place that knows where the brain lives. If we
+ * later move to a DB or remote service, only this module changes.
+ */
+
+export interface VendorProfile {
+  vendor: string;
+  avgPostingDelay: number;
+  commonIssue: string;
+  occurrencesLast6Months: number;
+  recommendedTolerance: number;
+  matchSuccessRate: number;
+}
+
+export interface AccountPattern {
+  avgCloseTime: number;
+  typicalMonthlyFees: number;
+  historicalCloseRate: number;
+}
+
+export interface CloseProbability {
+  current: number;
+  blockers: string[];
+  /**
+   * Human-readable formula for "how is this number computed".
+   * Keep this short and defensible - the demo audience WILL ask.
+   */
+  formula: string;
+}
+
+export interface FinancialBrain {
+  customerId: string;
+  learningSince: string;
+  sessionsAnalyzed: number;
+  vendorProfiles: VendorProfile[];
+  accountPatterns: Record<string, AccountPattern>;
+  closeProbability: CloseProbability;
+}
+
+const BRAIN_PATH = resolve(process.cwd(), '../data/financial-brain.json');
+
+let cached: FinancialBrain | null = null;
+
+export async function loadBrain(): Promise<FinancialBrain> {
+  if (cached) return cached;
+  try {
+    const raw = await readFile(BRAIN_PATH, 'utf-8');
+    cached = JSON.parse(raw) as FinancialBrain;
+    logger.info('brain.loaded', { customer: cached.customerId, sessions: cached.sessionsAnalyzed });
+    return cached;
+  } catch (err) {
+    logger.error('brain.load.fail', { path: BRAIN_PATH, error: String(err) });
+    throw new Error(`Could not load Financial Brain from ${BRAIN_PATH}. Run from the repo root.`);
+  }
+}
+
+/**
+ * Hot-reload the brain. Useful in dev if you tweak the JSON without restarting.
+ */
+export function clearBrainCache(): void {
+  cached = null;
+}
+
+/**
+ * Returns the brain serialized for prompt injection. Keep it compact - the
+ * JSON itself IS the system context. No prose wrapper needed.
+ */
+export async function brainAsPromptContext(): Promise<string> {
+  const brain = await loadBrain();
+  return JSON.stringify(brain, null, 2);
+}

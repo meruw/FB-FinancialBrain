@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add app-wide custom CSS here when needed.
+   Prefer Tailwind utilities. Reserve this file for:
+   - keyframes the Brain effects use
+   - global resets that Tailwind doesn't cover
+   - typography you want everywhere */
