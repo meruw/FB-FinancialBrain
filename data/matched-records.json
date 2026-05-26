@@ -1,1 +1,6 @@
-[]
+[
+  { "id": "MR-001", "bankId": "BNK-003", "sapId": "SAP-001", "ruleUsed": "ExactDate", "matchedAt": "2026-05-02T09:14:22Z" },
+  { "id": "MR-002", "bankId": "BNK-005", "sapId": "SAP-002", "ruleUsed": "ExactDate", "matchedAt": "2026-05-02T09:14:22Z" },
+  { "id": "MR-003", "bankId": "BNK-007", "sapId": "SAP-003", "ruleUsed": "ExactDate", "matchedAt": "2026-05-02T09:14:23Z" },
+  { "id": "MR-004", "bankId": "BNK-010", "sapId": "SAP-004", "ruleUsed": "ExactDate", "matchedAt": "2026-05-02T09:14:23Z" }
+]

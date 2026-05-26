@@ -1,1 +1,18 @@
-{}
+{
+  "id": "SESSION-APR-2026",
+  "period": "April 2026",
+  "account": "Main Checking",
+  "status": "in_progress",
+  "openedAt": "2026-05-02T08:00:00Z",
+  "endingBalance": 482310.50,
+  "difference": -239600.00,
+  "totals": {
+    "bank": { "count": 10, "sum": 239350.00 },
+    "sap":  { "count": 6,  "sum": 239050.00 }
+  },
+  "matchSummary": {
+    "matched": 4,
+    "unmatched": 6,
+    "matchRate": 0.40
+  }
+}

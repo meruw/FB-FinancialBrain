@@ -1,1 +1,17 @@
-{}
+{
+  "customerId": "NOBRANCHES",
+  "generatedAt": "2026-05-02T08:00:00Z",
+  "monthlyCloseHistory": [
+    { "period": "Oct 2025", "daysToClose": 3, "unmatchedAtOpen": 4, "closedClean": true },
+    { "period": "Nov 2025", "daysToClose": 5, "unmatchedAtOpen": 7, "closedClean": true },
+    { "period": "Dec 2025", "daysToClose": 8, "unmatchedAtOpen": 9, "closedClean": false },
+    { "period": "Jan 2026", "daysToClose": 4, "unmatchedAtOpen": 5, "closedClean": true },
+    { "period": "Feb 2026", "daysToClose": 3, "unmatchedAtOpen": 3, "closedClean": true },
+    { "period": "Mar 2026", "daysToClose": 6, "unmatchedAtOpen": 8, "closedClean": true }
+  ],
+  "topRecurringIssues": [
+    { "vendor": "CONSTRUTECH", "issue": "date_tolerance_miss", "monthsAppeared": 5 },
+    { "vendor": "BRAUTOTEST",  "issue": "sap_already_matched", "monthsAppeared": 4 },
+    { "vendor": null,          "issue": "no_sap_counterpart",  "monthsAppeared": 6 }
+  ]
+}

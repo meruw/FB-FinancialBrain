@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "UM-001",
+    "bankId": "BNK-001",
+    "failureReason": "date_tolerance_miss",
+    "details": "Bank debit on 2026-04-28, closest SAP entry (SAP-005) posts 2026-05-02 — 4 days difference, exceeds current 3-day tolerance. CONSTRUTECH has a known avg delay of 4.2 days."
+  },
+  {
+    "id": "UM-002",
+    "bankId": "BNK-002",
+    "failureReason": "sap_already_matched",
+    "details": "SAP-006 (BRAUTOTEST $8,750) was matched to a prior bank entry in session APR-01. Cannot match BNK-002 against the same SAP document."
+  },
+  {
+    "id": "UM-003",
+    "bankId": "BNK-004",
+    "failureReason": "no_sap_counterpart",
+    "details": "Bank fee of $45.00 on 2026-04-30. No SAP GL entry found for bank commission expenses in April. Likely booked to overhead account not yet posted."
+  },
+  {
+    "id": "UM-004",
+    "bankId": "BNK-006",
+    "failureReason": "no_sap_counterpart",
+    "details": "SPEI transfer fee of $35.00. Same pattern as UM-003 — bank charges not yet reflected in SAP."
+  },
+  {
+    "id": "UM-005",
+    "bankId": "BNK-008",
+    "failureReason": "likely_duplicate",
+    "details": "BNK-008 and BNK-009 are identical: same amount ($9,800), same date (2026-04-22), same description. Only one SAP counterpart exists. One of these is likely a duplicate payment to CONSTRUTECH."
+  },
+  {
+    "id": "UM-006",
+    "bankId": "BNK-009",
+    "failureReason": "likely_duplicate",
+    "details": "Duplicate of BNK-008. Both cannot be matched — flagged for manual review before closing."
+  }
+]

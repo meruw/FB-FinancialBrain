@@ -1,21 +1,22 @@
 /**
  * Domain types shared across the client.
- *
- * These mirror the mock data shapes in /data/*.json. Keep them in sync with
- * the JSON. If you later switch to generated types from Zod, replace this
- * file and re-export from there - nothing else should care.
+ * Mirror the Zod schemas in server/src/schemas/ — keep in sync.
  */
 
-export type RuleId =
-  | 'ExactDate'
-  | 'ExactCheckNumber'
-  | 'DateWithRange'
-  | 'NACHA'
-  | 'FastBank';
+// ─── Core data types ────────────────────────────────────────────────────────
+
+export type RuleId = 'ExactDate' | 'ExactCheckNumber' | 'DateWithRange' | 'NACHA' | 'FastBank';
+
+export type FailureReason =
+  | 'date_tolerance_miss'
+  | 'no_sap_counterpart'
+  | 'sap_already_matched'
+  | 'amount_mismatch'
+  | 'likely_duplicate';
 
 export interface BankTransaction {
   id: string;
-  date: string; // ISO yyyy-mm-dd
+  date: string;
   amount: number;
   description: string;
   reference: string;
@@ -42,12 +43,7 @@ export interface MatchedRecord {
 export interface UnmatchedCase {
   id: string;
   bankId: string;
-  failureReason:
-    | 'date_tolerance_miss'
-    | 'no_sap_counterpart'
-    | 'sap_already_matched'
-    | 'amount_mismatch'
-    | 'likely_duplicate';
+  failureReason: FailureReason;
   details: string;
 }
 
@@ -56,10 +52,116 @@ export interface ReconciliationSession {
   period: string;
   account: string;
   status: 'open' | 'in_progress' | 'closed';
+  openedAt: string;
   endingBalance: number;
   difference: number;
   totals: {
     bank: { count: number; sum: number };
     sap: { count: number; sum: number };
+  };
+  matchSummary: {
+    matched: number;
+    unmatched: number;
+    matchRate: number;
+  };
+}
+
+// ─── Financial Brain ─────────────────────────────────────────────────────────
+
+export interface VendorProfile {
+  vendor: string;
+  avgPostingDelay: number;
+  commonIssue: FailureReason;
+  occurrencesLast6Months: number;
+  recommendedTolerance: number;
+  matchSuccessRate: number;
+}
+
+export interface FinancialBrain {
+  customerId: string;
+  learningSince: string;
+  sessionsAnalyzed: number;
+  vendorProfiles: VendorProfile[];
+  accountPatterns: Record<
+    string,
+    { avgCloseTime: number; typicalMonthlyFees: number; historicalCloseRate: number }
+  >;
+  closeProbability: {
+    current: number;
+    blockers: string[];
+    formula: string;
+  };
+}
+
+// ─── Feature output types (mirrors server/src/schemas/) ─────────────────────
+
+export interface BriefBlocker {
+  description: string;
+  severity: 'high' | 'medium' | 'low';
+  vendor: string | null;
+  knownPattern: boolean;
+}
+
+export interface BriefRecommendation {
+  action: string;
+  expectedImpact: string;
+  priority: 1 | 2 | 3;
+}
+
+export interface Brief {
+  sessionId: string;
+  closeProbability: number;
+  closeProbabilityLabel: string;
+  blockers: BriefBlocker[];
+  recommendations: BriefRecommendation[];
+  estimatedResolutionMinutes: number;
+  brainInsight: string;
+}
+
+export interface DebugDiagnosis {
+  transactionId: string;
+  diagnosis: string;
+  rootCause: FailureReason;
+  vendorContext: string | null;
+  suggestedFix: string;
+  suggestedToleranceDays: number | null;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export type RiskFlag = {
+  type:
+    | 'duplicate_payment'
+    | 'unusual_amount'
+    | 'vendor_anomaly'
+    | 'timing_anomaly'
+    | 'missing_sap_entry'
+    | 'policy_violation';
+  description: string;
+};
+
+export interface RiskAssessment {
+  transactionId: string;
+  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+  riskLabel: string;
+  flags: RiskFlag[];
+  recommendation: 'escalate' | 'review' | 'auto_resolve' | 'ignore';
+  brainBasis: string;
+}
+
+export interface NarrativeInsight {
+  insight: string;
+  category: 'vendor' | 'pattern' | 'risk';
+}
+
+export interface Narrative {
+  sessionId: string;
+  headline: string;
+  narrative: string;
+  learnedThisSession: NarrativeInsight[];
+  stats: {
+    matched: number;
+    unmatched: number;
+    closeProbability: number;
+    resolvedBlockers: number;
   };
 }
