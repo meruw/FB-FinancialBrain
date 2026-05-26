@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { env } from './env.js';
 import { logger } from './utils/logger.js';
+import { dataRouter } from './routes/data.js';
 import { briefRouter } from './routes/brief.js';
 import { debugRouter } from './routes/debug.js';
 import { riskRouter } from './routes/risk.js';
@@ -28,6 +29,7 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.use('/api/data', dataRouter);
 app.use('/api/brief', briefRouter);
 app.use('/api/debug', debugRouter);
 app.use('/api/risk', riskRouter);

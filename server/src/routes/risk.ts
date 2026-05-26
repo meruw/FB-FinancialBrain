@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { callClaude, extractJson } from '../services/claude.js';
 import { brainAsPromptContext } from '../services/brain.js';
+import { loadBankTransactions, loadUnmatchedCases } from '../services/data.js';
 import { riskSchema, type RiskAssessment } from '../schemas/risk.js';
 import { riskPrompt } from '../prompts/risk.js';
 import { riskMock } from '../mocks/risk.js';
@@ -13,22 +12,6 @@ import { logger } from '../utils/logger.js';
 const InputSchema = z.object({
   transactionId: z.string(),
 });
-
-interface BankTxn {
-  id: string;
-  date: string;
-  amount: number;
-  description: string;
-  reference: string;
-  type: string;
-}
-
-interface UnmatchedCase {
-  id: string;
-  bankId: string;
-  failureReason: string;
-  details: string;
-}
 
 export const riskRouter = Router();
 
@@ -45,13 +28,11 @@ riskRouter.post('/', async (req, res) => {
   }
 
   try {
-    const [bankRaw, unmatchedRaw] = await Promise.all([
-      readFile(resolve(process.cwd(), '../data/bank-transactions.json'), 'utf-8'),
-      readFile(resolve(process.cwd(), '../data/unmatched-cases.json'), 'utf-8'),
+    const [bankTxns, unmatchedCases, brain] = await Promise.all([
+      loadBankTransactions(),
+      loadUnmatchedCases(),
+      brainAsPromptContext(),
     ]);
-
-    const bankTxns = JSON.parse(bankRaw) as BankTxn[];
-    const unmatchedCases = JSON.parse(unmatchedRaw) as UnmatchedCase[];
 
     const bankTxn = bankTxns.find((t) => t.id === transactionId);
     if (!bankTxn) {
@@ -60,12 +41,10 @@ riskRouter.post('/', async (req, res) => {
 
     const unmatchedCase = unmatchedCases.find((c) => c.bankId === transactionId) ?? null;
 
-    // Duplicate signal: other transactions with the exact same date and amount (excluding self)
     const potentialDuplicates = bankTxns.filter(
       (t) => t.id !== transactionId && t.date === bankTxn.date && t.amount === bankTxn.amount
     );
 
-    const brain = await brainAsPromptContext();
     const { system, user } = riskPrompt({
       brain,
       bankTransaction: {
@@ -87,8 +66,7 @@ riskRouter.post('/', async (req, res) => {
     });
 
     const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024 });
-    const json = extractJson(text);
-    const validated: RiskAssessment = riskSchema.parse(json);
+    const validated: RiskAssessment = riskSchema.parse(extractJson(text));
 
     return res.json(validated);
   } catch (err) {

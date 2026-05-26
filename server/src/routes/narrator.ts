@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { callClaude, extractJson } from '../services/claude.js';
-import { brainAsPromptContext } from '../services/brain.js';
+import { brainAsPromptContext, loadBrain } from '../services/brain.js';
+import {
+  loadBankTransactions,
+  loadMatchedRecords,
+  loadUnmatchedCases,
+} from '../services/data.js';
 import { narratorSchema, type Narrative } from '../schemas/narrator.js';
 import { narratorPrompt } from '../prompts/narrator.js';
 import { narratorMock } from '../mocks/narrator.js';
@@ -13,26 +16,6 @@ import { logger } from '../utils/logger.js';
 const InputSchema = z.object({
   sessionId: z.string(),
 });
-
-interface UnmatchedCase {
-  id: string;
-  bankId: string;
-  failureReason: string;
-  details: string;
-}
-
-interface MatchedRecord {
-  id: string;
-}
-
-interface BankTxn {
-  id: string;
-}
-
-interface ReconciliationSession {
-  id: string;
-  closeProbability?: number;
-}
 
 export const narratorRouter = Router();
 
@@ -47,22 +30,13 @@ narratorRouter.post('/', async (req, res) => {
   }
 
   try {
-    const [unmatchedRaw, matchedRaw, bankRaw, sessionRaw] = await Promise.all([
-      readFile(resolve(process.cwd(), '../data/unmatched-cases.json'), 'utf-8'),
-      readFile(resolve(process.cwd(), '../data/matched-records.json'), 'utf-8'),
-      readFile(resolve(process.cwd(), '../data/bank-transactions.json'), 'utf-8'),
-      readFile(resolve(process.cwd(), '../data/reconciliation-session.json'), 'utf-8'),
+    const [unmatched, matched, bank, brain, brainData] = await Promise.all([
+      loadUnmatchedCases(),
+      loadMatchedRecords(),
+      loadBankTransactions(),
+      brainAsPromptContext(),
+      loadBrain(),
     ]);
-
-    const unmatched = JSON.parse(unmatchedRaw) as UnmatchedCase[];
-    const matched = JSON.parse(matchedRaw) as MatchedRecord[];
-    const bank = JSON.parse(bankRaw) as BankTxn[];
-    const session = JSON.parse(sessionRaw) as ReconciliationSession;
-
-    // Use Brain's closeProbability as the authoritative number
-    const brain = await brainAsPromptContext();
-    const brainData = JSON.parse(brain) as { closeProbability: { current: number } };
-    const closeProbability = brainData.closeProbability.current;
 
     const { system, user } = narratorPrompt({
       brain,
@@ -71,8 +45,8 @@ narratorRouter.post('/', async (req, res) => {
         matched: matched.length,
         unmatched: unmatched.length,
         totalBankTxns: bank.length,
-        closeProbability,
-        resolvedBlockers: 0, // frontend will pass this once it tracks user actions
+        closeProbability: brainData.closeProbability.current,
+        resolvedBlockers: 0,
       },
       unmatchedSummary: unmatched.map((c) => ({
         bankId: c.bankId,
@@ -81,7 +55,6 @@ narratorRouter.post('/', async (req, res) => {
       })),
     });
 
-    // Narrator uses Opus for better prose quality; falls back to default model if not set
     const text = await callClaude({
       system,
       user,
@@ -90,8 +63,7 @@ narratorRouter.post('/', async (req, res) => {
       maxTokens: 2048,
     });
 
-    const json = extractJson(text);
-    const validated: Narrative = narratorSchema.parse(json);
+    const validated: Narrative = narratorSchema.parse(extractJson(text));
 
     return res.json(validated);
   } catch (err) {
