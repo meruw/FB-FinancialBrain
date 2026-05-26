@@ -6,6 +6,7 @@ import { loadBankTransactions, loadMatchedRecords, loadUnmatchedCases } from '..
 import { briefSchema, type Brief } from '../schemas/brief.js';
 import { briefPrompt } from '../prompts/brief.js';
 import { briefMock } from '../mocks/brief.js';
+import { parseBody } from '../utils/validate.js';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
 
@@ -16,13 +17,11 @@ const InputSchema = z.object({
 export const briefRouter = Router();
 
 briefRouter.post('/', async (req, res) => {
-  const parsed = InputSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid input', issues: parsed.error.issues });
-  }
+  const body = parseBody(InputSchema, req, res);
+  if (!body) return;
 
   if (env.DEMO_MODE) {
-    return res.json({ ...briefMock, sessionId: parsed.data.sessionId });
+    return res.json({ ...briefMock, sessionId: body.sessionId });
   }
 
   try {
@@ -35,7 +34,7 @@ briefRouter.post('/', async (req, res) => {
 
     const { system, user } = briefPrompt({
       brain,
-      sessionId: parsed.data.sessionId,
+      sessionId: body.sessionId,
       unmatchedCount: unmatched.length,
       matchedCount: matched.length,
       totalBankTxns: bank.length,
@@ -47,6 +46,6 @@ briefRouter.post('/', async (req, res) => {
     return res.json(validated);
   } catch (err) {
     logger.warn('brief.fallback', { error: String(err) });
-    return res.json({ ...briefMock, sessionId: parsed.data.sessionId });
+    return res.json({ ...briefMock, sessionId: body.sessionId });
   }
 });

@@ -6,6 +6,7 @@ import { loadBankTransactions, loadUnmatchedCases } from '../services/data.js';
 import { riskSchema, type RiskAssessment } from '../schemas/risk.js';
 import { riskPrompt } from '../prompts/risk.js';
 import { riskMock } from '../mocks/risk.js';
+import { parseBody } from '../utils/validate.js';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
 
@@ -16,12 +17,10 @@ const InputSchema = z.object({
 export const riskRouter = Router();
 
 riskRouter.post('/', async (req, res) => {
-  const parsed = InputSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid input', issues: parsed.error.issues });
-  }
+  const body = parseBody(InputSchema, req, res);
+  if (!body) return;
 
-  const { transactionId } = parsed.data;
+  const { transactionId } = body;
 
   if (env.DEMO_MODE) {
     return res.json({ ...riskMock, transactionId });

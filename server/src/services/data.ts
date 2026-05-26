@@ -56,16 +56,6 @@ export interface ReconciliationSession {
   };
 }
 
-// ─── Path resolver ────────────────────────────────────────────────────────────
-
-// Single place that knows where data lives.
-// If data ever moves, change only this function.
-function dataPath(file: string): string {
-  return resolve(process.cwd(), `../data/${file}`);
-}
-
-// ─── Historical patterns ──────────────────────────────────────────────────────
-
 export interface MonthlyClose {
   period: string;
   daysToClose: number;
@@ -84,26 +74,18 @@ export interface HistoricalPatterns {
   }>;
 }
 
-// ─── Cache ────────────────────────────────────────────────────────────────────
+// ─── Path resolver ────────────────────────────────────────────────────────────
 
-// Same pattern as brain.ts: read once, cache in memory.
-// For this demo the data never changes at runtime, so this is safe.
-const cache: Partial<{
-  bankTransactions: BankTransaction[];
-  sapTransactions: SapTransaction[];
-  unmatchedCases: UnmatchedCase[];
-  matchedRecords: MatchedRecord[];
-  session: ReconciliationSession;
-  historicalPatterns: HistoricalPatterns;
-}> = {};
+function dataPath(file: string): string {
+  return resolve(process.cwd(), `../data/${file}`);
+}
 
-async function loadJson<T>(file: string, key: keyof typeof cache): Promise<T> {
-  if (cache[key] !== undefined) return cache[key] as T;
+// ─── Loader primitive ─────────────────────────────────────────────────────────
+
+async function readDataFile<T>(file: string): Promise<T> {
   try {
     const raw = await readFile(dataPath(file), 'utf-8');
     const parsed = JSON.parse(raw) as T;
-    // @ts-expect-error — generic assignment into discriminated cache
-    cache[key] = parsed;
     logger.info('data.loaded', { file });
     return parsed;
   } catch (err) {
@@ -112,28 +94,58 @@ async function loadJson<T>(file: string, key: keyof typeof cache): Promise<T> {
   }
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+// ─── Per-type caches ──────────────────────────────────────────────────────────
+//
+// One nullable variable per type — same pattern as brain.ts.
+// Fully type-safe: no generics, no @ts-expect-error, no runtime surprises.
 
-export const loadBankTransactions = () =>
-  loadJson<BankTransaction[]>('bank-transactions.json', 'bankTransactions');
+let cachedBankTransactions: BankTransaction[] | null = null;
+let cachedSapTransactions: SapTransaction[] | null = null;
+let cachedUnmatchedCases: UnmatchedCase[] | null = null;
+let cachedMatchedRecords: MatchedRecord[] | null = null;
+let cachedSession: ReconciliationSession | null = null;
+let cachedHistoricalPatterns: HistoricalPatterns | null = null;
 
-export const loadSapTransactions = () =>
-  loadJson<SapTransaction[]>('sap-transactions.json', 'sapTransactions');
+// ─── Public loaders ───────────────────────────────────────────────────────────
 
-export const loadUnmatchedCases = () =>
-  loadJson<UnmatchedCase[]>('unmatched-cases.json', 'unmatchedCases');
+export async function loadBankTransactions(): Promise<BankTransaction[]> {
+  if (cachedBankTransactions) return cachedBankTransactions;
+  cachedBankTransactions = await readDataFile<BankTransaction[]>('bank-transactions.json');
+  return cachedBankTransactions;
+}
 
-export const loadMatchedRecords = () =>
-  loadJson<MatchedRecord[]>('matched-records.json', 'matchedRecords');
+export async function loadSapTransactions(): Promise<SapTransaction[]> {
+  if (cachedSapTransactions) return cachedSapTransactions;
+  cachedSapTransactions = await readDataFile<SapTransaction[]>('sap-transactions.json');
+  return cachedSapTransactions;
+}
 
-export const loadSession = () =>
-  loadJson<ReconciliationSession>('reconciliation-session.json', 'session');
+export async function loadUnmatchedCases(): Promise<UnmatchedCase[]> {
+  if (cachedUnmatchedCases) return cachedUnmatchedCases;
+  cachedUnmatchedCases = await readDataFile<UnmatchedCase[]>('unmatched-cases.json');
+  return cachedUnmatchedCases;
+}
 
-export const loadHistoricalPatterns = () =>
-  loadJson<HistoricalPatterns>('historical-patterns.json', 'historicalPatterns');
+export async function loadMatchedRecords(): Promise<MatchedRecord[]> {
+  if (cachedMatchedRecords) return cachedMatchedRecords;
+  cachedMatchedRecords = await readDataFile<MatchedRecord[]>('matched-records.json');
+  return cachedMatchedRecords;
+}
 
-// Warms up the entire cache at once. Call on server startup so the first
-// real request is never the slow one.
+export async function loadSession(): Promise<ReconciliationSession> {
+  if (cachedSession) return cachedSession;
+  cachedSession = await readDataFile<ReconciliationSession>('reconciliation-session.json');
+  return cachedSession;
+}
+
+export async function loadHistoricalPatterns(): Promise<HistoricalPatterns> {
+  if (cachedHistoricalPatterns) return cachedHistoricalPatterns;
+  cachedHistoricalPatterns = await readDataFile<HistoricalPatterns>('historical-patterns.json');
+  return cachedHistoricalPatterns;
+}
+
+// ─── Cache management ─────────────────────────────────────────────────────────
+
 export async function warmupCache(): Promise<void> {
   await Promise.all([
     loadBankTransactions(),
@@ -146,10 +158,11 @@ export async function warmupCache(): Promise<void> {
   logger.info('data.cache.warm');
 }
 
-// Clears all cached data — used by the /api/data/reload endpoint so JSON
-// edits during demo prep take effect without restarting the server.
 export function clearDataCache(): void {
-  for (const key of Object.keys(cache) as Array<keyof typeof cache>) {
-    delete cache[key];
-  }
+  cachedBankTransactions = null;
+  cachedSapTransactions = null;
+  cachedUnmatchedCases = null;
+  cachedMatchedRecords = null;
+  cachedSession = null;
+  cachedHistoricalPatterns = null;
 }
