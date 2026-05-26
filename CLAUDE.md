@@ -229,7 +229,84 @@ what the Brain "would have learned" and reset between demo runs.
 - **Avoid premature abstraction.** Two features sharing code is fine. Three
   is when you extract.
 
-## 10. Git workflow (2 people)
+## 10. Team roles — read this first if you're an AI assistant
+
+There are two engineers on this project. Each has a dedicated AI assistant.
+**Before writing any code, identify which role you are serving.**
+
+---
+
+### Role A — Frontend Engineer
+
+**Your territory:** everything inside `client/` and `data/`.
+
+**Your job:**
+- Build and own the app layout: persistent Brain panel (right rail) + reconciliation workspace (left/center)
+- Build all four feature components and their hooks under `client/src/features/`
+- Build the Brain panel components under `client/src/components/brain/`
+- Build shared UI primitives under `client/src/components/ui/`
+- Manage Zustand store slices for session state and selected transaction
+- Wire feature hooks to `client/src/services/api.ts` — that's the only place `fetch()` lives
+- Populate and refine `data/*.json` if you need richer mock content
+
+**Your API contract:** the types in `client/src/types/domain.ts`. When the
+backend says an endpoint is ready, the shape it returns matches exactly what
+`domain.ts` already describes. You can build UI against mock data before the
+backend exists.
+
+**You do NOT touch:** anything inside `server/`. If you need the backend to
+change its response shape, open a conversation with the backend engineer first
+and update `domain.ts` + the matching Zod schema together.
+
+**Feature order (build in this sequence):**
+1. Layout shell + Brain panel with static data (unblocks everything)
+2. `close-guarantee` (Brief) — simplest, validates the full pipeline
+3. `match-debugger` — select a transaction, get diagnosis
+4. `risk-firewall` — risk badge on each unmatched row
+5. `narrator` — end-of-session summary modal
+
+---
+
+### Role B — Backend Engineer
+
+**Your territory:** everything inside `server/`.
+
+**Your job:**
+- Implement all four feature routes following the canonical skeleton in §5
+- Write prompts in `server/src/prompts/` — pure functions, no side effects
+- Write realistic mocks in `server/src/mocks/` — these run when `DEMO_MODE=true`
+- Make sure every route validates input with Zod and falls back to mock on any error
+- `server/src/services/brain.ts` loads `data/financial-brain.json` — do not hardcode Brain data in prompts
+- `server/src/services/claude.ts` is the only place the Anthropic SDK is touched
+
+**Your API contract:** the Zod schemas in `server/src/schemas/`. These already
+exist for all four features. Do not change their shape without syncing with the
+frontend engineer and updating `client/src/types/domain.ts` too.
+
+**You do NOT touch:** anything inside `client/`. If the frontend needs a
+different response shape, discuss it first.
+
+**Feature order (build in this sequence):**
+1. `brief` route + prompt + mock (`/api/brief`)
+2. `debug` route + prompt + mock (`/api/debug`)
+3. `risk` route + prompt + mock (`/api/risk`)
+4. `narrator` route + prompt + mock (`/api/narrate`)
+
+Mount each route in `server/src/index.ts` as it ships.
+
+---
+
+### Shared contract — the only files both roles touch
+
+| File | Who changes it | Rule |
+|---|---|---|
+| `client/src/types/domain.ts` | Both, by agreement | Never change unilaterally |
+| `server/src/schemas/*.ts` | Both, by agreement | Never change unilaterally |
+| `data/financial-brain.json` | Either | Discuss before changing numbers used in the pitch |
+
+---
+
+## 11. Git workflow (2 people)
 
 - **`main`** is always demo-able. The Thursday version of the demo runs from
   `main`.
@@ -244,7 +321,7 @@ what the Brain "would have learned" and reset between demo runs.
 - Squash on merge to keep `main` history readable.
 - Never commit `.env`. The `.gitignore` blocks it; do not work around that.
 
-## 11. The Brain panel must be visible at all times
+## 12. The Brain panel must be visible at all times
 
 The previous strategy work landed on a key decision: we are building a
 standalone product, not a plugin. The visual identity of the app should
@@ -254,7 +331,7 @@ Practically: a persistent right rail (or a primary panel) that updates
 contextually as the user interacts with the workspace. Never hide it
 behind a modal or a tab.
 
-## 12. Demo-killing failure modes to avoid
+## 13. Demo-killing failure modes to avoid
 
 These are things that have killed past hackathon demos. Don't let them
 happen.
@@ -274,7 +351,7 @@ happen.
   computed, point at `closeProbability.formula` in `financial-brain.json`.
   It's documented for a reason.
 
-## 13. Out of scope (do not build)
+## 14. Out of scope (do not build)
 
 The strategy doc named these. Re-stating so we don't drift:
 
@@ -288,7 +365,7 @@ The strategy doc named these. Re-stating so we don't drift:
 If a teammate suggests building one of these, point them at this list and
 the 2.5-day clock.
 
-## 14. The pitch sentence
+## 15. The pitch sentence
 
 We open the presentation with this. Memorize it.
 
