@@ -7,6 +7,18 @@
  *   - one place to add error handling and retries
  *   - one place to swap in fixtures during tests
  */
+import type {
+  Brief,
+  DebugDiagnosis,
+  RiskAssessment,
+  Narrative,
+  FinancialBrain,
+  ReconciliationSession,
+  BankTransaction,
+  SapTransaction,
+  MatchedRecord,
+  UnmatchedCase,
+} from '@/types/domain';
 
 async function postJson<TBody, TResponse>(
   path: string,
@@ -25,6 +37,12 @@ async function postJson<TBody, TResponse>(
   return (await res.json()) as TResponse;
 }
 
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`GET ${url} failed: ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
 export const api = {
   health: async (): Promise<{ ok: boolean; demoMode: boolean; model: string }> => {
     const res = await fetch('/api/health');
@@ -32,6 +50,26 @@ export const api = {
     return res.json();
   },
 
+   // AI feature endpoints
+  getBrief: (sessionId: string) =>
+    postJson<{ sessionId: string }, Brief>('/api/brief', { sessionId }),
+
+  getDebugDiagnosis: (transactionId: string) =>
+    postJson<{ transactionId: string }, DebugDiagnosis>('/api/debug', { transactionId }),
+
+  getRiskAssessment: (transactionId: string) =>
+    postJson<{ transactionId: string }, RiskAssessment>('/api/risk', { transactionId }),
+
+  getNarrative: (sessionId: string) =>
+    postJson<{ sessionId: string }, Narrative>('/api/narrate', { sessionId }),
+  
+// Data endpoints
+  getBrain: () => getJson<FinancialBrain>('/api/data/brain'),
+  getSession: () => getJson<ReconciliationSession>('/api/data/session'),
+  getBankTransactions: () => getJson<BankTransaction[]>('/api/data/transactions/bank'),
+  getSapTransactions: () => getJson<SapTransaction[]>('/api/data/transactions/sap'),
+  getMatches: () => getJson<MatchedRecord[]>('/api/data/matches'),
+  getUnmatched: () => getJson<UnmatchedCase[]>('/api/data/unmatched'),
   // Feature endpoints get added here as they ship:
   //
   // brief: (sessionId: string) =>
@@ -47,5 +85,3 @@ export const api = {
   //   postJson<{ sessionId: string }, Narrative>('/api/narrate', { sessionId }),
 };
 
-// Tells TypeScript postJson is intentionally unused for now (it'll be when features land).
-void postJson;

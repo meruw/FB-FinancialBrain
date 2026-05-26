@@ -1,0 +1,84 @@
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
+import type { Brief } from '@/types/domain';
+
+// Mirrors server/src/mocks/brief.ts — used when the API call fails so the demo never breaks.
+const FALLBACK: Brief = {
+  sessionId: 'SESSION-MAY-2026',
+  closeProbability: 0.72,
+  closeProbabilityLabel: '72% — likely to close with manual intervention',
+  blockers: [
+    {
+      description: '3 CONSTRUTECH date tolerance misses (avg 4.2 day delay)',
+      severity: 'medium',
+      vendor: 'CONSTRUTECH',
+      knownPattern: true,
+    },
+    {
+      description: '1 BRAUTOTEST SAP entry already matched to prior session',
+      severity: 'high',
+      vendor: 'BRAUTOTEST',
+      knownPattern: true,
+    },
+    {
+      description: '2 unclassified bank fees with no SAP counterpart',
+      severity: 'low',
+      vendor: null,
+      knownPattern: true,
+    },
+    {
+      description: '1 likely duplicate payment to CONSTRUTECH ($9,800)',
+      severity: 'high',
+      vendor: 'CONSTRUTECH',
+      knownPattern: false,
+    },
+  ],
+  recommendations: [
+    {
+      action: 'Raise CONSTRUTECH date tolerance to 5 days',
+      expectedImpact: 'Resolves 3 blockers, lifts close probability to ~85%',
+      priority: 1,
+    },
+    {
+      action: 'Verify duplicate payment BNK-008 / BNK-009 with treasury',
+      expectedImpact: 'Prevents potential $9,800 double payment',
+      priority: 1,
+    },
+    {
+      action: 'Post bank fee GL entries in SAP for April',
+      expectedImpact: 'Clears 2 low-severity unmatched items',
+      priority: 2,
+    },
+  ],
+  estimatedResolutionMinutes: 18,
+  brainInsight:
+    'This session matches the December 2025 exception profile — resolved in 8 days. ' +
+    'The CONSTRUTECH tolerance pattern has appeared in 5 of the last 6 months.',
+};
+
+export interface UseCloseGuaranteeResult {
+  brief: Brief | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export function useCloseGuarantee(sessionId: string): UseCloseGuaranteeResult {
+  const [brief, setBrief] = useState<Brief | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setError(null);
+    api
+      .getBrief(sessionId)
+      .then(setBrief)
+      .catch((err) => {
+        setError(String(err));
+        setBrief(FALLBACK);
+      })
+      .finally(() => setIsLoading(false));
+  }, [sessionId]);
+
+  return { brief, isLoading, error };
+}

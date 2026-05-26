@@ -44,7 +44,9 @@ preference.
 |---|---|---|
 | Frontend | Vite + React 18 + TypeScript | Fast HMR, strict types |
 | Styling | Tailwind CSS | Speed of pulido |
-| Animation | Framer Motion | Brain entrance, gauge tween, typewriter |
+| Animation — transitions | Framer Motion `^11` | Brain entrance, layout shifts, typewriter |
+| Animation — SVG gauges | anime.js `^4` | Arc stroke-dashoffset tweens only |
+| Animation — Lottie | `@lottiefiles/dotlottie-react` | Brain "thinking" state in right rail |
 | Charts | Recharts | RadialBarChart works as a gauge |
 | Icons | lucide-react | Consistent, small |
 | State | Zustand | Tiny, slice-based. No Redux. |
@@ -223,6 +225,18 @@ what the Brain "would have learned" and reset between demo runs.
   because multiple features react to them.
 - Do NOT introduce Redux, Jotai, or React Query for this scope.
 
+### Store slices (do not merge)
+
+| File | Export | What it holds |
+|---|---|---|
+| `store/session.ts` | `useSessionStore` | `sessionId`, `status` ("briefing"\|"working"\|"closed"), `selectedTransactionId`. Actions: `openSession`, `closeSession`, `selectTransaction`. |
+| `store/data.ts` | `useDataStore` | `brain`, `session`, `transactions`, `matchedRecords`, `unmatchedCases`, `isLoading`, `error`. Action: `loadAll()` fans out all five `/api/data/*` calls in parallel. |
+| `store/index.ts` | re-exports both | Barrel — import from here, not from the individual slice files. |
+
+`loadAll()` is called once in `App.tsx` on mount. While `isLoading` is true, the
+app shows a full-screen spinner. The existing briefing/working layout only renders
+after data is loaded.
+
 ## 9. Coding rules
 
 - **TypeScript strict everywhere.** `noUncheckedIndexedAccess` is on. Yes,
@@ -394,7 +408,26 @@ happen.
   computed, point at `closeProbability.formula` in `financial-brain.json`.
   It's documented for a reason.
 
-## 14. Out of scope (do not build)
+## 14. Animation library rules (enforced)
+
+Three animation libraries are in the project. Each has exactly one job:
+
+| Library | Use it for | Do NOT use it for |
+|---|---|---|
+| **Framer Motion** | Page/component entrance, layout shifts, modal transitions, typewriter text | SVG arc tweens, Lottie |
+| **anime.js v4** | SVG `strokeDashoffset` arc gauge animations, count-up numbers | Layout, Lottie |
+| **@lottiefiles/dotlottie-react** | Brain "thinking" Lottie in the right rail while an AI call is in flight | General loading spinners, any non-Lottie use |
+
+Import pattern for anime.js v4: `import anime from 'animejs'`.
+Import pattern for Lottie: `import { DotLottieReact } from '@lottiefiles/dotlottie-react'`.
+
+SVG gauge pattern (close-guarantee and any future gauge):
+- `strokeDasharray="377 503"` (270° track, 90° invisible gap; numbers are 0.75 × 2π × r and 2π × r)
+- Animate `strokeDashoffset` from `TRACK` (empty) to `TRACK * (1 − pct)` with anime.js
+- `transform="rotate(135 cx cy)"` positions the gap at the bottom of the dial
+- Count-up: `anime({ targets: obj, value: target, update: () => setState(...) })`
+
+## 15. Out of scope (do not build)
 
 The strategy doc named these. Re-stating so we don't drift:
 
@@ -408,7 +441,7 @@ The strategy doc named these. Re-stating so we don't drift:
 If a teammate suggests building one of these, point them at this list and
 the 2.5-day clock.
 
-## 15. The pitch sentence
+## 16. The pitch sentence
 
 We open the presentation with this. Memorize it.
 

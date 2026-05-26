@@ -1,38 +1,79 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useSessionStore } from '@/store/session';
+import { useDataStore } from '@/store/data';
 
-/**
- * Top-level shell. Replace with the real layout (Brain Briefing screen,
- * reconciliation workspace, etc.) on Day 1.
- *
- * Right now this just pings /api/health so you can verify the server is up
- * and the Vite proxy is wired correctly.
- */
 function App() {
-  const [health, setHealth] = useState<string>('checking server...');
+  const status = useSessionStore((s) => s.status);
+  const { isLoading, error, loadAll } = useDataStore((s) => ({
+    isLoading: s.isLoading,
+    error: s.error,
+    loadAll: s.loadAll,
+  }));
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((r) => r.json())
-      .then((data) => setHealth(JSON.stringify(data, null, 2)))
-      .catch((e) => setHealth(`server unreachable: ${String(e)}`));
-  }, []);
+    void loadAll();
+  }, [loadAll]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-brain-bg">
+        <svg
+          className="h-8 w-8 animate-spin text-brain-accent"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+        <span className="text-sm text-brain-muted">Financial Brain initializing...</span>
+      </div>
+    );
+  }
+
+  if (error !== null) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-brain-bg">
+        <span className="text-sm text-brain-danger">{error}</span>
+      </div>
+    );
+  }
+
+  if (status === 'briefing') {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-brain-bg">
+        <span className="text-2xl font-semibold tracking-wide text-brain-accent">
+          Brain Briefing
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen p-8 font-sans">
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold text-brain-accent">
-          FastBank Recon Intelligence
-        </h1>
-        <p className="text-brain-muted mt-1">Scaffold ready. Time to build the Brain.</p>
-      </header>
+    <div className="flex h-screen w-screen overflow-hidden bg-brain-bg">
+      {/* Reconciliation workspace — left 65 % */}
+      <div className="flex h-full w-[65%] flex-col items-center justify-center bg-brain-surface">
+        <span className="text-brain-muted text-sm uppercase tracking-widest">Workspace</span>
+      </div>
 
-      <section className="rounded-lg border border-slate-700 bg-brain-surface p-6">
-        <h2 className="text-sm uppercase tracking-widest text-brain-muted mb-2">
-          Server status
-        </h2>
-        <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap">{health}</pre>
-      </section>
-    </main>
+      {/* Divider */}
+      <div className="w-px shrink-0 bg-slate-700" />
+
+      {/* Brain Panel — right 35 % */}
+      <div className="flex h-full w-[35%] flex-col items-center justify-center bg-brain-bg">
+        <span className="text-brain-muted text-sm uppercase tracking-widest">Brain Panel</span>
+      </div>
+    </div>
   );
 }
 
