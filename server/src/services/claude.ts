@@ -66,14 +66,15 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<string> {
 
 /**
  * Parses a JSON object from Claude's text response.
- * Claude sometimes wraps JSON in ```json fences even when told not to - strip them.
+ * Claude sometimes wraps JSON in ```json fences even when told not to — strip them.
+ * Returns `unknown` so callers are forced to validate (via Zod) before using the data.
  * Throws if the result is not valid JSON. Caller should catch and fall back.
  */
-export function extractJson<T = unknown>(text: string): T {
+export function extractJson(text: string): unknown {
   const stripped = text
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/```\s*$/i, '')
     .trim();
-  return JSON.parse(stripped) as T;
+  return JSON.parse(stripped);
 }
