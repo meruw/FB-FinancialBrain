@@ -1,52 +1,61 @@
-/**
- * Prompt builder for Session Brief / Close Guarantee.
- *
- * All prompts live as pure functions in this directory. No I/O. No Claude
- * SDK. They take inputs, return { system, user } strings. This makes them
- * easy to test, iterate on, and copy between features.
- *
- * Tips when writing:
- *   - The system prompt sets the role and JSON contract.
- *   - The user prompt carries the data (brain + transactions).
- *   - Always instruct: "Return ONLY valid JSON. No prose, no markdown fences."
- *   - Always show the exact JSON shape in the system prompt.
- *
- * Fill this in on Day 1.
- */
+export interface BriefPromptInput {
+  brain: string;     // financial-brain.json serialized by brainAsPromptContext()
+  sessionId: string;
+  // Pre-computed values passed in so Claude doesn't have to do arithmetic
+  unmatchedCount: number;
+  matchedCount: number;
+  totalBankTxns: number;
+}
 
-// export interface BriefPromptInput {
-//   brain: string;        // already-serialized brain JSON
-//   sessionId: string;
-// }
+export function briefPrompt(input: BriefPromptInput): { system: string; user: string } {
+  const system = `
+You are the Financial Brain of FastBank Recon Intelligence.
+Your job is to produce an opening briefing when an accountant starts a reconciliation session.
+You have memory of this customer's history through the Financial Brain context provided.
 
-// export function briefPrompt(input: BriefPromptInput) {
-//   const system = `
-// You are the Financial Brain of FastBank Recon Intelligence.
-// You produce a Close Guarantee briefing for the user opening a reconciliation
-// session. You always return STRICT JSON matching this shape:
-//
-// {
-//   "closeProbability": number between 0 and 1,
-//   "briefing": "1-2 short paragraphs of plain English",
-//   "sessionsAnalyzed": integer,
-//   "blockers": [{ "label": string, "severity": "low"|"medium"|"high", "knownPattern": boolean }],
-//   "estimatedResolutionMinutes": integer
-// }
-//
-// Rules:
-// - Use only the data given. Do not invent vendors or amounts.
-// - The briefing must reference at least one specific vendor or pattern from the brain.
-// - Do NOT wrap your response in markdown fences. Return raw JSON only.
-//   `.trim();
+Return ONLY a JSON object matching this exact shape — no prose, no markdown fences:
 
-//   const user = `
-// Financial Brain (customer context):
-// ${input.brain}
-//
-// Session to brief: ${input.sessionId}
-//
-// Return the JSON now.
-//   `.trim();
+{
+  "sessionId": string,
+  "closeProbability": number between 0.0 and 1.0,
+  "closeProbabilityLabel": string (e.g. "72% — likely to close with manual intervention"),
+  "blockers": [
+    {
+      "description": string (specific, mention vendor or amount if relevant),
+      "severity": "high" | "medium" | "low",
+      "vendor": string | null,
+      "knownPattern": boolean (true if this vendor/issue appears in the Brain history)
+    }
+  ],
+  "recommendations": [
+    {
+      "action": string (concrete, actionable),
+      "expectedImpact": string (what improves if they do this),
+      "priority": 1 | 2 | 3 (1 = do first)
+    }
+  ],
+  "estimatedResolutionMinutes": number (integer, realistic estimate based on blocker count),
+  "brainInsight": string (one sentence connecting this session to a past pattern from the Brain)
+}
 
-//   return { system, user };
-// }
+Rules:
+- Use only data provided. Never invent vendors, amounts, or dates.
+- closeProbability must reflect the Brain's historical close rate adjusted for current blockers.
+- knownPattern must be true only if the vendor or issue appears in vendorProfiles or monthlyCloseHistory.
+- brainInsight must reference something specific from the Brain (a vendor, a month, a rate).
+- Return ONLY valid JSON. No prose, no markdown fences.
+`.trim();
+
+  const user = `
+Financial Brain (customer context):
+${input.brain}
+
+Session ID: ${input.sessionId}
+Matched transactions: ${input.matchedCount} of ${input.totalBankTxns}
+Unmatched cases: ${input.unmatchedCount}
+
+Produce the briefing now.
+`.trim();
+
+  return { system, user };
+}

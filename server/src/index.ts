@@ -2,6 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import { env } from './env.js';
 import { logger } from './utils/logger.js';
+import { briefRouter } from './routes/brief.js';
+import { debugRouter } from './routes/debug.js';
+import { riskRouter } from './routes/risk.js';
+import { narratorRouter } from './routes/narrator.js';
 
 const app = express();
 
@@ -24,15 +28,10 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// Feature routes will be mounted here as they ship:
-// import { briefRouter } from './routes/brief.js';
-// import { debugRouter } from './routes/debug.js';
-// import { adviseRouter } from './routes/advise.js';
-// import { narrateRouter } from './routes/narrate.js';
-// app.use('/api/brief', briefRouter);
-// app.use('/api/debug', debugRouter);
-// app.use('/api/advise', adviseRouter);
-// app.use('/api/narrate', narrateRouter);
+app.use('/api/brief', briefRouter);
+app.use('/api/debug', debugRouter);
+app.use('/api/risk', riskRouter);
+app.use('/api/narrate', narratorRouter);
 
 // 404
 app.use((req, res) => {

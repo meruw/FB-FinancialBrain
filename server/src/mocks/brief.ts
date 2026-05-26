@@ -1,28 +1,56 @@
-/**
- * Fallback response for Session Brief / Close Guarantee.
- *
- * This is rendered to the user if the Claude API call fails, times out, or
- * returns invalid JSON during the live demo. It must be REALISTIC - judges
- * should not be able to tell whether they're seeing live AI or this mock.
- *
- * Update this file as you tune the real prompt so the mock stays believable.
- */
+import type { Brief } from '../schemas/brief.js';
 
-// import type { Brief } from '../schemas/brief.js';
-//
-// export const briefMock: Brief = {
-//   closeProbability: 0.72,
-//   sessionsAnalyzed: 7,
-//   estimatedResolutionMinutes: 18,
-//   briefing:
-//     'Close Probability: 72%. The Brain detected 3 patterns from your last 6 months: ' +
-//     'CONSTRUTECH delays 4.2 days on average, BRAUTOTEST has a recurring SAP entry conflict, ' +
-//     'and your Main Checking account historically has 2 bank fees per month unclassified. ' +
-//     'Resolve these 4 blockers to reach 91%.',
-//   blockers: [
-//     { label: '3 CONSTRUTECH date tolerance misses', severity: 'medium', knownPattern: true },
-//     { label: '1 BRAUTOTEST SAP entry conflict', severity: 'high', knownPattern: true },
-//     { label: '2 unclassified bank fees', severity: 'low', knownPattern: true },
-//     { label: '1 duplicate payment risk', severity: 'medium', knownPattern: false },
-//   ],
-// };
+// Realistic fallback for DEMO_MODE=true or when the Claude call fails.
+// Numbers come from financial-brain.json — keep them in sync if that file changes.
+export const briefMock: Brief = {
+  sessionId: 'SESSION-APR-2026',
+  closeProbability: 0.72,
+  closeProbabilityLabel: '72% — likely to close with manual intervention',
+  blockers: [
+    {
+      description: '3 CONSTRUTECH date tolerance misses (avg 4.2 day delay)',
+      severity: 'medium',
+      vendor: 'CONSTRUTECH',
+      knownPattern: true,
+    },
+    {
+      description: '1 BRAUTOTEST SAP entry already matched to prior session',
+      severity: 'high',
+      vendor: 'BRAUTOTEST',
+      knownPattern: true,
+    },
+    {
+      description: '2 unclassified bank fees with no SAP counterpart',
+      severity: 'low',
+      vendor: null,
+      knownPattern: true,
+    },
+    {
+      description: '1 likely duplicate payment to CONSTRUTECH ($9,800)',
+      severity: 'high',
+      vendor: 'CONSTRUTECH',
+      knownPattern: false,
+    },
+  ],
+  recommendations: [
+    {
+      action: 'Raise CONSTRUTECH date tolerance to 5 days',
+      expectedImpact: 'Resolves 3 blockers, lifts close probability to ~85%',
+      priority: 1,
+    },
+    {
+      action: 'Verify duplicate payment BNK-008 / BNK-009 with treasury',
+      expectedImpact: 'Prevents potential $9,800 double payment',
+      priority: 1,
+    },
+    {
+      action: 'Post bank fee GL entries in SAP for April',
+      expectedImpact: 'Clears 2 low-severity unmatched items',
+      priority: 2,
+    },
+  ],
+  estimatedResolutionMinutes: 18,
+  brainInsight:
+    'This session matches the December 2025 exception profile — resolved in 8 days. ' +
+    'The CONSTRUTECH tolerance pattern has appeared in 5 of the last 6 months.',
+};
