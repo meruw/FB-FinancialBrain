@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { env } from './env.js';
 import { logger } from './utils/logger.js';
+import { loadBrain } from './services/brain.js';
+import { warmupCache } from './services/data.js';
 import { dataRouter } from './routes/data.js';
 import { briefRouter } from './routes/brief.js';
 import { debugRouter } from './routes/debug.js';
@@ -53,4 +55,10 @@ app.listen(env.PORT, () => {
     demoMode: env.DEMO_MODE,
     model: env.CLAUDE_MODEL,
   });
+
+  // Pre-load all data into memory so the first real request is never the slow one.
+  // Errors here are logged but don't crash the server — routes have their own error handling.
+  Promise.all([loadBrain(), warmupCache()]).catch((err) =>
+    logger.error('startup.warmup.fail', { error: String(err) })
+  );
 });

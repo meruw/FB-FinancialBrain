@@ -64,6 +64,26 @@ function dataPath(file: string): string {
   return resolve(process.cwd(), `../data/${file}`);
 }
 
+// ─── Historical patterns ──────────────────────────────────────────────────────
+
+export interface MonthlyClose {
+  period: string;
+  daysToClose: number;
+  unmatchedAtOpen: number;
+  closedClean: boolean;
+}
+
+export interface HistoricalPatterns {
+  customerId: string;
+  generatedAt: string;
+  monthlyCloseHistory: MonthlyClose[];
+  topRecurringIssues: Array<{
+    vendor: string | null;
+    issue: string;
+    monthsAppeared: number;
+  }>;
+}
+
 // ─── Cache ────────────────────────────────────────────────────────────────────
 
 // Same pattern as brain.ts: read once, cache in memory.
@@ -74,6 +94,7 @@ const cache: Partial<{
   unmatchedCases: UnmatchedCase[];
   matchedRecords: MatchedRecord[];
   session: ReconciliationSession;
+  historicalPatterns: HistoricalPatterns;
 }> = {};
 
 async function loadJson<T>(file: string, key: keyof typeof cache): Promise<T> {
@@ -108,7 +129,25 @@ export const loadMatchedRecords = () =>
 export const loadSession = () =>
   loadJson<ReconciliationSession>('reconciliation-session.json', 'session');
 
-// Clears all cached data — useful in dev when you edit a JSON file without restarting
+export const loadHistoricalPatterns = () =>
+  loadJson<HistoricalPatterns>('historical-patterns.json', 'historicalPatterns');
+
+// Warms up the entire cache at once. Call on server startup so the first
+// real request is never the slow one.
+export async function warmupCache(): Promise<void> {
+  await Promise.all([
+    loadBankTransactions(),
+    loadSapTransactions(),
+    loadUnmatchedCases(),
+    loadMatchedRecords(),
+    loadSession(),
+    loadHistoricalPatterns(),
+  ]);
+  logger.info('data.cache.warm');
+}
+
+// Clears all cached data — used by the /api/data/reload endpoint so JSON
+// edits during demo prep take effect without restarting the server.
 export function clearDataCache(): void {
   for (const key of Object.keys(cache) as Array<keyof typeof cache>) {
     delete cache[key];
