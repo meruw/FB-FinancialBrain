@@ -87,14 +87,23 @@ server/                Express backend
   src/
     index.ts             App boot + route mounting
     env.ts               Validated env (fails fast)
-    routes/              One file per feature: /api/brief, /api/debug, ...
+    routes/              One file per feature + data router
+      data.ts            GET /api/data/* — serves all JSON files to the client
+      brief.ts           POST /api/brief
+      debug.ts           POST /api/debug
+      risk.ts            POST /api/risk
+      narrator.ts        POST /api/narrate
     services/
       claude.ts          The ONLY place the Anthropic SDK is touched
-      brain.ts           Loads + serves the Financial Brain context
+      brain.ts           Loads + caches financial-brain.json as a prompt string
+      data.ts            Loads + caches all other data/*.json files
     prompts/             Pure functions: input -> { system, user }
     schemas/             Zod schemas - the JSON contract per feature
     mocks/               Fallback responses per feature
-    utils/logger.ts      Tiny logger
+    utils/
+      logger.ts          Tiny structured logger
+      validate.ts        parseBody() — DRY Zod input validation for routes
+      matching.ts        findSapCandidates() — date+amount window search
 
 data/                  Mock data (the Brain + bank/SAP transactions)
   financial-brain.json   ← the protagonist
@@ -140,6 +149,7 @@ import { brainAsPromptContext } from '../services/brain.js';
 import { featureSchema, type FeatureOutput } from '../schemas/<feature>.js';
 import { featurePrompt } from '../prompts/<feature>.js';
 import { featureMock } from '../mocks/<feature>.js';
+import { parseBody } from '../utils/validate.js';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
 
@@ -148,26 +158,29 @@ const InputSchema = z.object({ /* ... */ });
 export const featureRouter = Router();
 
 featureRouter.post('/', async (req, res) => {
-  const parsed = InputSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid input', issues: parsed.error.issues });
-  }
+  const body = parseBody(InputSchema, req, res);
+  if (!body) return; // parseBody already sent a 400
 
-  if (env.DEMO_MODE) return res.json(featureMock);
+  if (env.DEMO_MODE) return res.json({ ...featureMock, ...body });
 
   try {
     const brain = await brainAsPromptContext();
-    const { system, user } = featurePrompt({ brain, ...parsed.data });
-    const text = await callClaude({ system, user, temperature: 0 });
-    const json = extractJson(text);
-    const validated: FeatureOutput = featureSchema.parse(json);
+    const { system, user } = featurePrompt({ brain, ...body });
+    const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024 });
+    const validated: FeatureOutput = featureSchema.parse(extractJson(text));
     return res.json(validated);
   } catch (err) {
     logger.warn('<feature>.fallback', { error: String(err) });
-    return res.json(featureMock); // demo never breaks
+    return res.json({ ...featureMock, ...body }); // demo never breaks
   }
 });
 ```
+
+Key differences from the original skeleton:
+- Use `parseBody()` from `utils/validate.ts` — never call `.safeParse()` inline in a route.
+- `extractJson()` returns `unknown` — always pipe directly into `.parse()`. Do not assign it to a typed variable first.
+- Spread `...body` into the mock fallback so the response echoes back the request's `sessionId` / `transactionId`. The client needs it.
+- Compute any numeric summaries (counts, totals) in the route before building the prompt. Do not ask Claude to count.
 
 ## 6. Prompt rules
 
@@ -229,6 +242,23 @@ what the Brain "would have learned" and reset between demo runs.
 - **Avoid premature abstraction.** Two features sharing code is fine. Three
   is when you extract.
 
+### Server-specific rules (learned in Session 1)
+
+- **Use `parseBody()` for every route.** Never call `schema.safeParse(req.body)` inline in a handler. The util lives in `utils/validate.ts`.
+- **Use `serve()` for data endpoints.** The helper in `routes/data.ts` wraps any async loader with a typed fallback. Copy the pattern; do not call `readFile` directly in a route.
+- **No inline type declarations inside route files.** If you need a type shared between route, schema, and prompt, put it in the schema file (`schemas/<feature>.ts`) and import it.
+- **`extractJson()` returns `unknown`.** Do not cast it. Pipe directly into `schema.parse()` — that's the type narrowing step.
+- **Per-type nullable cache variables in `services/data.ts`.** Do not use a generic `Map<string, unknown>` or object cache — TypeScript can't narrow through it cleanly. Pattern:
+  ```ts
+  let cachedFoo: Foo[] | null = null;
+  export async function loadFoo(): Promise<Foo[]> {
+    if (cachedFoo) return cachedFoo;
+    cachedFoo = await readDataFile<Foo[]>('foo.json');
+    return cachedFoo;
+  }
+  ```
+- **DEMO_MODE check before any async work.** In a route, check `env.DEMO_MODE` immediately after validating the body — before loading data or calling `brainAsPromptContext()`. Keeps demo fast.
+
 ## 10. Team roles — read this first if you're an AI assistant
 
 There are two engineers on this project. Each has a dedicated AI assistant.
@@ -271,28 +301,41 @@ and update `domain.ts` + the matching Zod schema together.
 
 **Your territory:** everything inside `server/`.
 
-**Your job:**
-- Implement all four feature routes following the canonical skeleton in §5
-- Write prompts in `server/src/prompts/` — pure functions, no side effects
-- Write realistic mocks in `server/src/mocks/` — these run when `DEMO_MODE=true`
-- Make sure every route validates input with Zod and falls back to mock on any error
+**STATUS (as of Session 1 — 2026-05-26): BACKEND IS COMPLETE.**
+All 4 AI feature routes, the data router, and all supporting services are
+implemented and tested. Do not re-scaffold — extend or fix instead.
+
+**All live endpoints:**
+
+| Method | Path | What it does |
+|---|---|---|
+| GET | `/api/health` | Server + demo mode status |
+| GET | `/api/data/brain` | Full Financial Brain JSON |
+| GET | `/api/data/transactions/bank` | All bank transactions |
+| GET | `/api/data/transactions/sap` | All SAP transactions |
+| GET | `/api/data/records/matched` | Already-matched records |
+| GET | `/api/data/records/unmatched` | Unmatched cases (the workspace) |
+| GET | `/api/data/session` | Current reconciliation session header |
+| GET | `/api/data/historical` | Historical patterns for context |
+| POST | `/api/data/reload` | Clears all caches + reloads from disk |
+| POST | `/api/brief` | AI close-guarantee briefing |
+| POST | `/api/debug` | AI match debugger for one transaction |
+| POST | `/api/risk` | AI risk assessment for one transaction |
+| POST | `/api/narrate` | AI end-of-session narrative |
+
+**Your job (ongoing):**
+- Fix bugs in existing routes / prompts / schemas
+- Tune prompts if AI output quality is poor (test with `DEMO_MODE=false`)
+- Add fields to `data/financial-brain.json` if the demo pitch needs them
 - `server/src/services/brain.ts` loads `data/financial-brain.json` — do not hardcode Brain data in prompts
 - `server/src/services/claude.ts` is the only place the Anthropic SDK is touched
 
-**Your API contract:** the Zod schemas in `server/src/schemas/`. These already
-exist for all four features. Do not change their shape without syncing with the
-frontend engineer and updating `client/src/types/domain.ts` too.
+**Your API contract:** the Zod schemas in `server/src/schemas/`. Do not change
+their shape without syncing with the frontend engineer and updating
+`client/src/types/domain.ts` too.
 
 **You do NOT touch:** anything inside `client/`. If the frontend needs a
 different response shape, discuss it first.
-
-**Feature order (build in this sequence):**
-1. `brief` route + prompt + mock (`/api/brief`)
-2. `debug` route + prompt + mock (`/api/debug`)
-3. `risk` route + prompt + mock (`/api/risk`)
-4. `narrator` route + prompt + mock (`/api/narrate`)
-
-Mount each route in `server/src/index.ts` as it ships.
 
 ---
 
