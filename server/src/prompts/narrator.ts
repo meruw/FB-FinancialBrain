@@ -28,20 +28,13 @@ const JSON_SHAPE = `{
       "insight": string (what the Brain would update about this customer, specific and actionable),
       "category": "vendor" | "pattern" | "risk"
     }
-  ],
-  "stats": {
-    "matched": number (integer),
-    "unmatched": number (integer),
-    "closeProbability": number (0.0 to 1.0),
-    "resolvedBlockers": number (integer)
-  }
+  ]
 }`;
 
 const RULES = [
   'headline must name the biggest blocker or win of the session.',
   'narrative must reference at least 2 specific transaction IDs or vendor names.',
   'learnedThisSession must have 2-4 items. Each insight must be actionable, not generic.',
-  'stats must exactly match the numbers provided — do not invent or round.',
   'Tone: smart colleague giving a debrief — specific, warm, useful. Not corporate or robotic.',
 ];
 
