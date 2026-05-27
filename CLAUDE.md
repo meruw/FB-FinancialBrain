@@ -341,8 +341,8 @@ implemented and tested. Do not re-scaffold — extend or fix instead.
 | GET | `/api/data/brain` | Full Financial Brain JSON |
 | GET | `/api/data/transactions/bank` | All bank transactions |
 | GET | `/api/data/transactions/sap` | All SAP transactions |
-| GET | `/api/data/records/matched` | Already-matched records |
-| GET | `/api/data/records/unmatched` | Unmatched cases (the workspace) |
+| GET | `/api/data/matches` | Already-matched records |
+| GET | `/api/data/unmatched` | Unmatched cases (the workspace) |
 | GET | `/api/data/session` | Current reconciliation session header |
 | GET | `/api/data/historical` | Historical patterns for context |
 | POST | `/api/data/reload` | Clears all caches + reloads from disk |
