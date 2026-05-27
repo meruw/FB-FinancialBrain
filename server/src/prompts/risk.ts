@@ -1,5 +1,14 @@
+import type { VendorProfile } from '../services/brain.js';
+
+export interface BrainMeta {
+  customerId: string;
+  sessionsAnalyzed: number;
+  historicalCloseRate: number;
+}
+
 export interface RiskPromptInput {
-  brain: string;
+  vendorProfile: VendorProfile | null;
+  brainMeta: BrainMeta;
   bankTransaction: {
     id: string;
     date: string;
@@ -56,8 +65,9 @@ Recommendation rules:
 - "ignore": cosmetic issue, no financial impact
 
 Rules:
+- Assess ONLY the transaction provided. Do not reference any transaction IDs other than the one being assessed and those in the potentialDuplicates list.
 - Only flag "duplicate_payment" if potentialDuplicates array is non-empty.
-- brainBasis must reference specific data from the Brain (vendor name, rate, month count).
+- brainBasis must reference specific data from the vendor profile or Brain metadata provided.
 - Return ONLY valid JSON. No prose, no markdown fences.
 `.trim();
 
@@ -70,9 +80,17 @@ Rules:
     ? `Failure reason: ${input.unmatchedCase.failureReason}\nDetails: ${input.unmatchedCase.details}`
     : 'Transaction is matched — assess residual risk only.';
 
+  const vendorSection = input.vendorProfile
+    ? `Vendor profile from Brain:\n${JSON.stringify(input.vendorProfile, null, 2)}`
+    : 'Vendor not found in Brain history — no prior data available.';
+
   const user = `
-Financial Brain (customer context):
-${input.brain}
+Brain metadata:
+Customer: ${input.brainMeta.customerId}
+Sessions analyzed: ${input.brainMeta.sessionsAnalyzed}
+Historical close rate: ${input.brainMeta.historicalCloseRate}
+
+${vendorSection}
 
 Transaction to assess:
 ${JSON.stringify(input.bankTransaction, null, 2)}

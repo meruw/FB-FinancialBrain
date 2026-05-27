@@ -40,7 +40,7 @@ Return ONLY a JSON object matching this exact shape — no prose, no markdown fe
 
 Rules:
 - Use only data provided. Never invent vendors, amounts, or dates.
-- closeProbability must reflect the Brain's historical close rate adjusted for current blockers.
+- closeProbability must reflect the Brain's historical close rate adjusted for current blockers. Always between 0.50 and 0.95 — never 0 or 1.
 - knownPattern must be true only if the vendor or issue appears in vendorProfiles or monthlyCloseHistory.
 - brainInsight must reference something specific from the Brain (a vendor, a month, a rate).
 - Return ONLY valid JSON. No prose, no markdown fences.

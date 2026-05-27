@@ -12,6 +12,7 @@ import { logger } from '../utils/logger.js';
 
 const InputSchema = z.object({
   sessionId: z.string(),
+  resolvedBlockers: z.number().int().nonnegative().optional().default(0),
 });
 
 export const narratorRouter = Router();
@@ -41,7 +42,7 @@ narratorRouter.post('/', async (req, res) => {
         unmatched: unmatched.length,
         totalBankTxns: bank.length,
         closeProbability: brainData.closeProbability.current,
-        resolvedBlockers: 0,
+        resolvedBlockers: body.resolvedBlockers,
       },
       unmatchedSummary: unmatched.map((c) => ({
         bankId: c.bankId,
