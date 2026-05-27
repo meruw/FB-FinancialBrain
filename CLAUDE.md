@@ -536,3 +536,151 @@ We open the presentation with this. Memorize it.
 
 The Brain panel and the demo flow are designed to land this sentence
 visually. Anything that does not support it is a distraction.
+
+---
+---
+---
+
+# ███████████████████████████████████████████████████████████████
+# STRATEGY CONTEXT
+# Added 2026-05-27. Source: original product strategy conversation.
+# This is the "why" behind every decision in sections 1–16.
+# The sections above capture WHAT to build. This captures WHY.
+# ███████████████████████████████████████████████████████████████
+
+---
+
+## 17. Why this is a standalone app, not a FastBank plugin
+
+This decision was explicit and deliberate — not a default.
+
+- We don't have the FastBank repo. Building on top of their existing UI
+  would mean debugging their code under time pressure.
+- A side panel attached to an existing UI looks like a plugin.
+  A separate platform looks like a product. Judges respond to that difference.
+- Non-technical judges judge on visual impact — gauges, typewriter effects,
+  animated panels. Those are far easier to deliver in a standalone React app
+  than bolted onto an existing UI we don't control.
+
+**The production pitch for integration** — use this verbatim if asked
+how this would connect to real FastBank:
+
+> "This is a standalone demo. In production, the Financial Brain would sit
+> as an intelligence layer on top of your existing FastBank installation.
+> Every reconciliation event feeds the Brain automatically through the
+> FastBank API. Nothing changes in how your team uses FastBank today —
+> except it starts getting smarter about your company with every close."
+
+## 18. What was cut and why — do not un-cut these
+
+**Control Tower → merged into Close Guarantee.**
+Control Tower was a separate feature concept describing the Brain predicting
+what to do before the session starts. That is identical to Close Guarantee.
+They are the same screen with two names. Control Tower does not exist.
+
+**Resolution Advisor as a standalone screen → eliminated.**
+Its recommendations now appear inline inside the Match Debugger (TRACE) panel.
+Fewer navigation steps, same value delivered.
+
+The original feature list had 8 items:
+Session Brief · Control Tower · Close Guarantee · Risk Firewall ·
+Match Debugger · TRACE · Resolution Advisor · Narrator.
+
+It was collapsed to 4 before any code was written. The collapse was the
+strategy. Do not re-expand it.
+
+## 19. The three-moment Brain narrative arc
+
+Every Brain panel component serves one of these three moments.
+Build and review against this arc, not against a feature checklist.
+
+**Moment 1 — Before any work starts (Brain speaks first)**
+
+The user clicks "Open Session." Before seeing a single transaction, the
+Brain has already evaluated everything and delivers the Close Guarantee
+briefing with a probability, blockers, and recommendations.
+
+This is where judges understand what the Brain *is* — not because you
+described it, but because it already knew things about this specific company
+before anyone touched anything. That is the moment the product sells itself.
+
+**Moment 2 — On transaction click (Brain explains)**
+
+The user selects a CONSTRUTECH row in the workspace. The Brain Panel updates
+automatically — vendor profile, match trace, AI recommendation — without
+being asked. The judge sees the Brain connect today's miss to a 6-month
+pattern. This is the moment a judge thinks *"I want this."*
+
+The key word is **automatically**. The Brain panel must react to the selected
+transaction in Zustand without the user triggering any separate action.
+
+**Moment 3 — On session close (Brain documents and projects)**
+
+After the Narrator generates the session summary, the Brain Panel shows what
+it learned this session and projects the next close. This closes the product
+promise that opened at Moment 1.
+
+## 20. The Narrator closing line — this is the most important sentence in the demo
+
+The last thing visible on screen when the demo ends must be:
+
+> "The Financial Brain learned N new patterns from this session.
+> Your next close is already smarter."
+
+Followed immediately by:
+
+> Next close projection: 84% (+12% from today's 72%)
+> Sessions until projected 95%+ close rate: **3**
+
+**"3 sessions until 95%+ close rate"** is the payoff of the entire
+presentation. It is not a generic promise. It is a projection based on
+this company's specific history. That specificity is what makes it land.
+
+Before building the Narrator UI, verify that the `/api/narrate` response
+schema (`server/src/schemas/narrator.ts`) includes fields to support this:
+`nextCloseProbability`, the delta from today's probability, and
+`sessionsToTarget` (or equivalent names). If they are missing, add them
+before the UI is built — retrofitting a schema after the component is
+wired is painful.
+
+## 21. Match Debugger = TRACE — the "flight recorder" framing
+
+The `match-debugger` feature is called **TRACE** in the product pitch and
+in any demo narration.
+
+The frame that makes it memorable in the room:
+
+> "A flight recorder for payment decisions."
+
+Every rule that ran, every miss, every near-hit is logged. The Brain
+annotates the trace with vendor history: *"CONSTRUTECH has caused this
+same miss 4 times in the last 3 months."*
+
+The critical distinction from a generic debugger: **it remembers across
+sessions.** A normal debugger shows what happened today. TRACE shows
+what happened today in the context of 7 months of closes. That context
+is `financial-brain.json`. TRACE without the Brain is just a log viewer.
+TRACE with the Brain is institutional memory.
+
+When presenting, always use the name TRACE. When coding, the folder and
+hook are named `match-debugger` — that is fine. The naming distinction
+is only for demo narration.
+
+## 22. The 10-second defense of the 72% close probability
+
+When a judge asks *"how do you calculate that number?"*, the answer is
+not *"the AI estimated it."* That answer kills credibility.
+
+The correct answer, verbatim:
+
+> "It's based on your historical data. Sessions with this profile of
+> exceptions — these vendor patterns, this number of unmatched items —
+> closed successfully 72% of the time in your last 6 months. The AI
+> analyzes the pattern. It doesn't invent the number."
+
+This is honest, defensible, and makes the number more impressive because
+it is grounded in real history rather than a black-box guess.
+
+The formula is documented in `closeProbability.formula` inside
+`data/financial-brain.json`. That field exists specifically so this
+question can be answered by pointing at the data, not at the AI.
