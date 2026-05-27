@@ -216,8 +216,12 @@ export function CloseGuarantee({ sessionId }: CloseGuaranteeProps) {
             initial={{ scale: 0.78, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.28, type: 'spring', stiffness: 90, damping: 13 }}
+            className="flex flex-col items-center gap-2"
           >
             <Gauge value={Math.round(brief.closeProbability * 100)} size={300} />
+            <p className="text-center text-xs text-gray-400" style={{ width: 300 }}>
+              {brief.closeProbabilityLabel}
+            </p>
           </motion.div>
 
           {/* Stats cards — staggered spring pop */}

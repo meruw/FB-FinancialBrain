@@ -456,7 +456,7 @@ happen.
   If a call regularly exceeds these, switch that endpoint to Haiku.
 - **A demo that depends on venue WiFi.** Set `DEMO_MODE=true` if the
   network is bad. The talk should be identical.
-- **A "Close Probability: 72%" with no defense.** When asked how it's
+- **A "Close Probability: 62%" with no defense.** When asked how it's
   computed, point at `closeProbability.formula` in `financial-brain.json`.
   It's documented for a reason.
 
@@ -629,7 +629,7 @@ The last thing visible on screen when the demo ends must be:
 
 Followed immediately by:
 
-> Next close projection: 84% (+12% from today's 72%)
+> Next close projection: 84% (+22% from today's 62%)
 > Sessions until projected 95%+ close rate: **3**
 
 **"3 sessions until 95%+ close rate"** is the payoff of the entire
@@ -666,7 +666,7 @@ When presenting, always use the name TRACE. When coding, the folder and
 hook are named `match-debugger` — that is fine. The naming distinction
 is only for demo narration.
 
-## 22. The 10-second defense of the 72% close probability
+## 22. The 10-second defense of the 62% close probability
 
 When a judge asks *"how do you calculate that number?"*, the answer is
 not *"the AI estimated it."* That answer kills credibility.
@@ -675,7 +675,7 @@ The correct answer, verbatim:
 
 > "It's based on your historical data. Sessions with this profile of
 > exceptions — these vendor patterns, this number of unmatched items —
-> closed successfully 72% of the time in your last 6 months. The AI
+> closed successfully 62% of the time in your last 6 months. The AI
 > analyzes the pattern. It doesn't invent the number."
 
 This is honest, defensible, and makes the number more impressive because

@@ -3,8 +3,8 @@ import type { Brief } from '@/types/domain';
 // Client-side fallback. Matches server/src/mocks/brief.ts — keep in sync.
 export const briefMock: Brief = {
   sessionId: 'SESSION-MAY-2026',
-  closeProbability: 0.72,
-  closeProbabilityLabel: '72% — likely to close with manual intervention',
+  closeProbability: 0.62,
+  closeProbabilityLabel: '62% — likely to close with manual intervention',
   blockers: [
     {
       description: '3 CONSTRUTECH date tolerance misses (avg 4.2 day delay)',
