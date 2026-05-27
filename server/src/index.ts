@@ -10,6 +10,7 @@ import { debugRouter } from './routes/debug.js';
 import { riskRouter } from './routes/risk.js';
 import { narratorRouter } from './routes/narrator.js';
 import { advisorRouter } from './routes/advisor.js';
+import { simulateRouter } from './routes/simulate.js';
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/debug', debugRouter);
 app.use('/api/risk', riskRouter);
 app.use('/api/narrate', narratorRouter);
 app.use('/api/advisor', advisorRouter);
+app.use('/api/simulate', simulateRouter);
 
 // 404
 app.use((req, res) => {

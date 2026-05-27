@@ -190,3 +190,16 @@ export interface AdvisorResolution {
   risk: 'critical' | 'high' | 'medium' | 'low';
   brainBasis: string;
 }
+
+export type SimulationScenario = 'tolerance_change' | 'vendor_fix' | 'threshold_change';
+
+export interface SimulationResult {
+  scenarioLabel: string;
+  projectedCloseProbability: number;
+  projectedDelta: number;
+  casesResolved: number;
+  casesRemaining: number;
+  financialImpact: number;
+  narrative: string;
+  brainBasis: string;
+}

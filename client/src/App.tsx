@@ -5,6 +5,7 @@ import { CloseGuarantee } from '@/features/close-guarantee/CloseGuarantee';
 import { TransactionTable } from '@/components/reconciliation/TransactionTable';
 import { MatchDebugger } from '@/features/match-debugger/MatchDebugger';
 import { RiskFirewall } from '@/features/risk-firewall/RiskFirewall';
+import { Narrator } from '@/features/narrator/Narrator';
 import type { BankTransaction, SapTransaction } from '@/types/domain';
 
 function normalizeSap(sap: SapTransaction[]): BankTransaction[] {
@@ -21,6 +22,7 @@ function normalizeSap(sap: SapTransaction[]): BankTransaction[] {
 function App() {
   const status              = useSessionStore((s) => s.status);
   const sessionId           = useSessionStore((s) => s.sessionId);
+  const closeSession        = useSessionStore((s) => s.closeSession);
   const selectedId          = useSessionStore((s) => s.selectedTransactionId);
   const selectTransaction   = useSessionStore((s) => s.selectTransaction);
 
@@ -85,28 +87,46 @@ function App() {
     return <CloseGuarantee sessionId={sessionId} />;
   }
 
+  const isClosed = status === 'closed';
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#EDF2FA]">
 
       {/* ── Left zone — reconciliation workspace (65 %) ── */}
       <div className="flex h-full w-[65%] flex-col gap-4 overflow-y-auto bg-[#EDF2FA] p-6">
-        <RiskFirewall />
-        <TransactionTable
-          title="Bank Transactions"
-          transactions={transactions}
-          onSelect={selectTransaction}
-          selectedId={selectedId}
-          matchedIds={bankMatchedIds}
-          unmatchedIds={bankUnmatchedIds}
-        />
-        <TransactionTable
-          title="SAP Entries"
-          transactions={normalizeSap(sapTransactions)}
-          onSelect={selectTransaction}
-          selectedId={selectedId}
-          matchedIds={sapMatchedIds}
-          unmatchedIds={sapUnmatchedIds}
-        />
+
+        {/* Close session button — visible only while working */}
+        {status === 'working' && (
+          <div className="flex items-center justify-end">
+            <button
+              onClick={closeSession}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50"
+            >
+              Close session
+            </button>
+          </div>
+        )}
+
+        {/* Risk banner + tables — muted when session is closed */}
+        <div className={`flex flex-col gap-4 transition-opacity duration-300 ${isClosed ? 'pointer-events-none opacity-40' : ''}`}>
+          <RiskFirewall />
+          <TransactionTable
+            title="Bank Transactions"
+            transactions={transactions}
+            onSelect={selectTransaction}
+            selectedId={selectedId}
+            matchedIds={bankMatchedIds}
+            unmatchedIds={bankUnmatchedIds}
+          />
+          <TransactionTable
+            title="SAP Entries"
+            transactions={normalizeSap(sapTransactions)}
+            onSelect={selectTransaction}
+            selectedId={selectedId}
+            matchedIds={sapMatchedIds}
+            unmatchedIds={sapUnmatchedIds}
+          />
+        </div>
       </div>
 
       {/* Divider */}
@@ -114,7 +134,7 @@ function App() {
 
       {/* ── Right zone — Brain Panel (35 %) ── */}
       <div className="flex h-full w-[35%] flex-col bg-white">
-        <MatchDebugger />
+        {isClosed ? <Narrator /> : <MatchDebugger />}
       </div>
 
     </div>

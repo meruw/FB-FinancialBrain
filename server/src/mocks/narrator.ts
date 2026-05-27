@@ -3,21 +3,18 @@ import type { Narrative } from '../schemas/narrator.js';
 export const narratorMock: Narrative = {
   sessionId: 'SESSION-APR-2026',
   headline:
-    'April closed at 72% — CONSTRUTECH delays and a suspected duplicate held the session back.',
+    'CONSTRUTECH\'s posting lag blocked 3 matches and a suspected duplicate put $9,800 on hold — April closed at 62%.',
   narrative:
-    'This session followed a pattern the Brain has seen before. Of the 10 bank transactions ' +
-    'processed, 4 matched automatically — payroll, the wire transfer, and two clean vendor ' +
-    'payments. The remaining 6 required attention, and three of them trace back to a single ' +
-    'root cause: CONSTRUTECH\'s posting delay. The matching engine rejected these on a 3-day ' +
-    'tolerance rule that the Brain now knows is too tight for this vendor.\n\n' +
-    'The most urgent item is a suspected duplicate payment. BNK-008 and BNK-009 are ' +
-    'identical — same amount, same date, same description — and only one SAP counterpart ' +
-    'exists. Until treasury confirms whether both payments were intentional, this session ' +
-    'cannot close cleanly. The other two unmatched items are standard bank fees with no SAP ' +
-    'entry, a recurring pattern in every month the Brain has observed.\n\n' +
-    'The Brain has updated its model for CONSTRUTECH: a 5-day tolerance window would have ' +
-    'resolved 3 of the 6 blockers automatically. If applied next month, the projected open ' +
-    'match rate rises from 40% to 70% before any manual intervention.',
+    'Of the 12 bank transactions this session, 4 matched automatically — payroll, the wire ' +
+    'transfer, and two clean vendor payments. The remaining 8 required attention. Three of them ' +
+    'trace to a single root cause: CONSTRUTECH\'s posting delay. BNK-001, BNK-011, and BNK-012 ' +
+    'all fell just outside the 3-day tolerance — a rule the Brain now knows is too tight for ' +
+    'this vendor\'s 4.2-day average.\n\n' +
+    'The most urgent item is BNK-008 and BNK-009: two identical $9,800 debits to CONSTRUTECH ' +
+    'on the same date with only one SAP counterpart. One of these is likely a duplicate payment ' +
+    'and needs treasury sign-off before either entry can close. The remaining 3 items are a ' +
+    'locked BRAUTOTEST document and two recurring bank fees with no GL entry — both known ' +
+    'patterns the Brain has flagged across multiple sessions.',
   learnedThisSession: [
     {
       insight:
