@@ -33,6 +33,18 @@
     "id": "UM-006",
     "bankId": "BNK-009",
     "failureReason": "likely_duplicate",
-    "details": "Duplicate of BNK-008. Both cannot be matched — flagged for manual review before closing."
+    "details": "BNK-009 and BNK-008 share identical amount ($9,800), date (2026-04-22), and description. No second SAP counterpart exists — one payment is likely erroneous. Both held pending treasury review."
+  },
+  {
+    "id": "UM-007",
+    "bankId": "BNK-011",
+    "failureReason": "date_tolerance_miss",
+    "details": "Bank debit on 2026-04-08, closest SAP entry (SAP-007) posts 2026-04-12 — 4-day gap exceeds current 3-day tolerance. Consistent with CONSTRUTECH's known avg posting delay of 4.2 days."
+  },
+  {
+    "id": "UM-008",
+    "bankId": "BNK-012",
+    "failureReason": "date_tolerance_miss",
+    "details": "Bank debit on 2026-04-14, closest SAP entry (SAP-008) posts 2026-04-19 — 5-day gap exceeds current 3-day tolerance. Third consecutive CONSTRUTECH date miss this session — pattern strongly supports raising tolerance to 5 days."
   }
 ]

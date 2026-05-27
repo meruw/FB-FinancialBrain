@@ -1,3 +1,5 @@
+import { buildSystemPrompt } from './_shared.js';
+
 export interface DebugPromptInput {
   brain: string;
   // The specific bank transaction that failed to match
@@ -22,15 +24,7 @@ export interface DebugPromptInput {
   }>;
 }
 
-export function debugPrompt(input: DebugPromptInput): { system: string; user: string } {
-  const system = `
-You are the Financial Brain of FastBank Recon Intelligence.
-Your job is to explain in plain English why a bank transaction failed to match a SAP entry,
-and what the accountant should do to fix it.
-
-Return ONLY a JSON object matching this exact shape — no prose, no markdown fences:
-
-{
+const JSON_SHAPE = `{
   "transactionId": string (the bank transaction ID provided),
   "diagnosis": string (2-3 sentences, plain English, specific to this transaction),
   "rootCause": one of: "date_tolerance_miss" | "no_sap_counterpart" | "sap_already_matched" | "amount_mismatch" | "likely_duplicate",
@@ -38,15 +32,21 @@ Return ONLY a JSON object matching this exact shape — no prose, no markdown fe
   "suggestedFix": string (concrete action the accountant should take),
   "suggestedToleranceDays": number | null (only if rootCause is "date_tolerance_miss", otherwise null),
   "confidence": "high" | "medium" | "low"
-}
+}`;
 
-Rules:
-- diagnosis must mention the specific date, amount, or reference from the transaction data.
-- vendorContext must be drawn from the Brain's vendorProfiles. If the vendor is not in the Brain, return null.
-- suggestedToleranceDays must equal the Brain's recommendedTolerance for that vendor if available.
-- confidence is "high" if the rootCause matches a known Brain pattern, "medium" otherwise.
-- Return ONLY valid JSON. No prose, no markdown fences.
-`.trim();
+const RULES = [
+  'diagnosis must mention the specific date, amount, or reference from the transaction data.',
+  'vendorContext must be drawn from the Brain\'s vendorProfiles. If the vendor is not in the Brain, return null.',
+  'suggestedToleranceDays must equal the Brain\'s recommendedTolerance for that vendor if available.',
+  'confidence is "high" if the rootCause matches a known Brain pattern, "medium" otherwise.',
+];
+
+export function debugPrompt(input: DebugPromptInput): { system: string; user: string } {
+  const system = buildSystemPrompt(
+    'Your job is to explain in plain English why a bank transaction failed to match a SAP entry,\nand what the accountant should do to fix it.',
+    JSON_SHAPE,
+    RULES,
+  );
 
   const sapSection =
     input.sapCandidates.length > 0

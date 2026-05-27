@@ -7,12 +7,12 @@
   "endingBalance": 482310.50,
   "difference": -239600.00,
   "totals": {
-    "bank": { "count": 10, "sum": 239350.00 },
-    "sap":  { "count": 6,  "sum": 239050.00 }
+    "bank": { "count": 12, "sum": 270300.00 },
+    "sap":  { "count": 8,  "sum": 269700.00 }
   },
   "matchSummary": {
     "matched": 4,
-    "unmatched": 6,
-    "matchRate": 0.40
+    "unmatched": 8,
+    "matchRate": 0.33
   }
 }

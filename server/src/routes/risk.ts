@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
-import { brainAsPromptContext } from '../services/brain.js';
+import { loadBrain, findVendorProfile } from '../services/brain.js';
 import { loadBankTransactions, loadUnmatchedCases } from '../services/data.js';
 import { riskSchema, type RiskAssessment } from '../schemas/risk.js';
 import { riskPrompt } from '../prompts/risk.js';
@@ -27,10 +27,10 @@ riskRouter.post('/', async (req, res) => {
   }
 
   try {
-    const [bankTxns, unmatchedCases, brain] = await Promise.all([
+    const [bankTxns, unmatchedCases, brainData] = await Promise.all([
       loadBankTransactions(),
       loadUnmatchedCases(),
-      brainAsPromptContext(),
+      loadBrain(),
     ]);
 
     const bankTxn = bankTxns.find((t) => t.id === transactionId);
@@ -44,8 +44,21 @@ riskRouter.post('/', async (req, res) => {
       (t) => t.id !== transactionId && t.date === bankTxn.date && t.amount === bankTxn.amount
     );
 
+    const vendorProfile = findVendorProfile(brainData, bankTxn.description);
+
+    const accountPatterns = Object.values(brainData.accountPatterns);
+    const historicalCloseRate =
+      accountPatterns.length > 0
+        ? accountPatterns.reduce((sum, a) => sum + a.historicalCloseRate, 0) / accountPatterns.length
+        : 0;
+
     const { system, user } = riskPrompt({
-      brain,
+      vendorProfile,
+      brainMeta: {
+        customerId: brainData.customerId,
+        sessionsAnalyzed: brainData.sessionsAnalyzed,
+        historicalCloseRate,
+      },
       bankTransaction: {
         id: bankTxn.id,
         date: bankTxn.date,

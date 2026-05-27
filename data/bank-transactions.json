@@ -8,5 +8,7 @@
   { "id": "BNK-007", "date": "2026-04-25", "amount": 125000.00, "description": "DISPERSION NOMINA ABRIL 2026", "reference": "REF-4400", "type": "debit" },
   { "id": "BNK-008", "date": "2026-04-22", "amount": 9800.00, "description": "CONSTRUTECH SA DE CV COMPLEMENTO", "reference": "REF-8340", "type": "debit" },
   { "id": "BNK-009", "date": "2026-04-22", "amount": 9800.00, "description": "CONSTRUTECH SA DE CV COMPLEMENTO", "reference": "REF-8341", "type": "debit" },
-  { "id": "BNK-010", "date": "2026-04-05", "amount": 55000.00, "description": "WIRE USD CONVERSION TIPO DE CAMBIO", "reference": "REF-1122", "type": "debit" }
+  { "id": "BNK-010", "date": "2026-04-05", "amount": 55000.00, "description": "WIRE USD CONVERSION TIPO DE CAMBIO", "reference": "REF-1122", "type": "debit" },
+  { "id": "BNK-011", "date": "2026-04-08", "amount": 18650.00, "description": "CONSTRUTECH SA DE CV ESTIMACION", "reference": "REF-7755", "type": "debit" },
+  { "id": "BNK-012", "date": "2026-04-14", "amount": 12300.00, "description": "CONSTRUTECH SA DE CV PAGO PARCIAL", "reference": "REF-8001", "type": "debit" }
 ]

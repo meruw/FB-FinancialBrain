@@ -9,6 +9,7 @@ import { briefRouter } from './routes/brief.js';
 import { debugRouter } from './routes/debug.js';
 import { riskRouter } from './routes/risk.js';
 import { narratorRouter } from './routes/narrator.js';
+import { advisorRouter } from './routes/advisor.js';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/brief', briefRouter);
 app.use('/api/debug', debugRouter);
 app.use('/api/risk', riskRouter);
 app.use('/api/narrate', narratorRouter);
+app.use('/api/advisor', advisorRouter);
 
 // 404
 app.use((req, res) => {
