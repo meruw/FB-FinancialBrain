@@ -165,3 +165,25 @@ export interface Narrative {
     resolvedBlockers: number;
   };
 }
+
+export type AdvisorActionType =
+  | 'release_match'
+  | 'mark_fee'
+  | 'manual_match'
+  | 'escalate'
+  | 'flag_duplicate';
+
+export interface AdvisorStep {
+  order: number;
+  instruction: string;
+}
+
+export interface AdvisorResolution {
+  transactionId: string;
+  action: string;
+  actionType: AdvisorActionType;
+  reasoning: string;
+  steps: AdvisorStep[];
+  risk: 'critical' | 'high' | 'medium' | 'low';
+  brainBasis: string;
+}
