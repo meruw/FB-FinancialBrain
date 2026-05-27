@@ -1,0 +1,22 @@
+.typewriter-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  background: #8E31B5;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s steps(2) infinite;
+}
+
+/* steps(2) = hard on/off blink, not a smooth fade */
+@keyframes blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Brand highlight spans injected via dangerouslySetInnerHTML */
+em.brand {
+  font-style: normal;
+  font-weight: 600;
+  color: #8E31B5;
+}

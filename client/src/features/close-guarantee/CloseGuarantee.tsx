@@ -4,6 +4,7 @@ import { AlertCircle, ArrowRight, Sparkles, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSessionStore } from '@/store/session';
 import { Spinner } from '@/components/ui/Spinner';
+import { Typewriter } from '@/components/effects/Typewriter';
 import { useCloseGuarantee } from './useCloseGuarantee';
 import { briefMock } from './CloseGuarantee.mock';
 import type { BriefBlocker, CloseGuaranteeProps } from './CloseGuarantee.types';
@@ -48,22 +49,6 @@ function minuteEstimate(
   return `~${Math.max(1, Math.round((W[severity] / totalW) * total))} min`;
 }
 
-// Colors vendor names, $ amounts, and time durations inside the insight text.
-function highlightInsight(text: string) {
-  const TOKEN = /(\$[\d,]+(?:\.\d+)?|[A-Z]{3,}(?:\s+[A-Z]{3,})*|±?\d+(?:\.\d+)?\s+(?:days?|minutes?|months?|weeks?))/g;
-  const parts = text.split(TOKEN);
-  return (
-    <>
-      {parts.map((part, i) => {
-        if (!part) return null;
-        if (/^\$/.test(part))       return <span key={i} style={{ color: BLUE }}   className="font-semibold">{part}</span>;
-        if (/^[A-Z]{3}/.test(part)) return <span key={i} style={{ color: PURPLE }} className="font-semibold">{part}</span>;
-        if (/^[0-9±]/.test(part))   return <span key={i} className="font-semibold text-gray-800">{part}</span>;
-        return <span key={i}>{part}</span>;
-      })}
-    </>
-  );
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function CloseGuarantee({ sessionId }: CloseGuaranteeProps) {
@@ -73,61 +58,21 @@ export function CloseGuarantee({ sessionId }: CloseGuaranteeProps) {
   // Silently fall back to mock on error — demo must never show a broken state.
   const brief = data ?? (error !== null ? briefMock : null);
 
-  const [displayedText, setDisplayedText]     = useState('');
-  const [typing, setTyping]                   = useState(false);
-  const [cursorActive, setCursorActive]       = useState(false); // persists after typing ends
+  const [typewriterReady, setTypewriterReady] = useState(false);
   const [blockersVisible, setBlockersVisible] = useState(false);
 
-  // All timer/rAF handles — initialised to 0 so cleanup is always safe.
-  const typewriterRafRef   = useRef(0);
-  const typewriterTimerRef = useRef(0);
-  const fallbackTimerRef   = useRef(0);
+  const delayRef = useRef(0);
 
   useEffect(() => {
     if (!brief) return;
 
-    // Reset from any previous run so state is clean if brief changes.
-    setDisplayedText('');
-    setTyping(false);
-    setCursorActive(false);
+    setTypewriterReady(false);
     setBlockersVisible(false);
 
-    // Typewriter — rAF, 1 600 ms delay, 18 ms/char.
-    typewriterTimerRef.current = window.setTimeout(() => {
-      const text = brief.brainInsight;
-      let i = 0;
-      let lastTime = performance.now();
+    // Mount the Typewriter 1 600 ms after the brief loads — matches gauge entrance timing.
+    delayRef.current = window.setTimeout(() => setTypewriterReady(true), 1600);
 
-      setDisplayedText('');
-      setTyping(true);
-      setCursorActive(true); // cursor stays on after typing finishes
-
-      const tick = (now: number) => {
-        const elapsed = now - lastTime;
-        const chars   = Math.floor(elapsed / 18);
-        if (chars > 0) {
-          i = Math.min(i + chars, text.length);
-          setDisplayedText(text.slice(0, i));
-          lastTime = now - (elapsed % 18);
-          if (i >= text.length) {
-            setTyping(false);
-            setBlockersVisible(true);
-            return;
-          }
-        }
-        typewriterRafRef.current = requestAnimationFrame(tick);
-      };
-      typewriterRafRef.current = requestAnimationFrame(tick);
-
-      // 3. 4 s failsafe — show blockers even if brainInsight is very long.
-      fallbackTimerRef.current = window.setTimeout(() => setBlockersVisible(true), 4000);
-    }, 1600);
-
-    return () => {
-      cancelAnimationFrame(typewriterRafRef.current);
-      clearTimeout(typewriterTimerRef.current);
-      clearTimeout(fallbackTimerRef.current);
-    };
+    return () => clearTimeout(delayRef.current);
   }, [brief]);
 
   if (loading) {
@@ -195,19 +140,17 @@ export function CloseGuarantee({ sessionId }: CloseGuaranteeProps) {
             className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm"
           >
             <p className="min-h-[3.5rem] text-sm leading-relaxed text-gray-700">
-              {typing ? (
-                <>
-                  {displayedText}
-                  <span className="ml-px animate-pulse select-none" style={{ color: PURPLE }}>|</span>
-                </>
-              ) : (
-                <>
-                  {highlightInsight(displayedText)}
-                  {/* Cursor persists after typing to show the AI is live */}
-                  {cursorActive && (
-                    <span className="ml-px animate-pulse select-none" style={{ color: PURPLE }}>|</span>
-                  )}
-                </>
+              {typewriterReady && (
+                <Typewriter
+                  text={brief.brainInsight}
+                  speed={14}
+                  highlights={[
+                    /\$[\d,]+(?:\.\d+)?/,
+                    /[A-Z]{3,}(?:\s+[A-Z]{3,})*/,
+                    /±?\d+(?:\.\d+)?\s+(?:days?|minutes?|months?|weeks?)/,
+                  ]}
+                  onDone={() => setBlockersVisible(true)}
+                />
               )}
             </p>
           </motion.div>
