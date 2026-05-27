@@ -5,7 +5,7 @@
 
 // ─── Core data types ────────────────────────────────────────────────────────
 
-export type RuleId = 'ExactDate' | 'ExactCheckNumber' | 'DateWithRange' | 'NACHA' | 'FastBank';
+export type RuleId = 'ExactDate' | 'ExactCheckNumber' | 'DateWithRange' | 'NACHA' | 'FastBank' | 'ManualMatch';
 
 export type FailureReason =
   | 'date_tolerance_miss'
@@ -210,6 +210,20 @@ export interface AdvisorResolution {
 }
 
 export type SimulationScenario = 'tolerance_change' | 'vendor_fix' | 'threshold_change';
+
+export interface ResolveResult {
+  transactionId: string;
+  actionType: AdvisorActionType;
+  resolved: true;
+  updatedStats: {
+    matched: number;
+    unmatched: number;
+    closeProbability: number;
+    nextCloseProbability: number;
+    nextCloseDelta: number;
+    sessionsToTarget: number;
+  };
+}
 
 export interface SimulationResult {
   scenarioLabel: string;
