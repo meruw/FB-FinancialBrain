@@ -109,6 +109,25 @@ let cachedMatchedRecords: MatchedRecord[] | null = null;
 let cachedSession: ReconciliationSession | null = null;
 let cachedHistoricalPatterns: HistoricalPatterns | null = null;
 
+// ─── In-memory resolve state ──────────────────────────────────────────────────
+//
+// Tracks which bank transactions have been accepted via POST /api/resolve.
+// Persists for the lifetime of the server process — POST /api/data/reload clears it.
+// This lets the close probability gauge rise live during the demo without any DB writes.
+
+const resolvedBankIds = new Set<string>();
+const resolvedTimestamps = new Map<string, string>();
+
+export function markResolved(bankId: string): void {
+  resolvedBankIds.add(bankId);
+  resolvedTimestamps.set(bankId, new Date().toISOString());
+}
+
+export function resetResolvedState(): void {
+  resolvedBankIds.clear();
+  resolvedTimestamps.clear();
+}
+
 // ─── Public loaders ───────────────────────────────────────────────────────────
 
 export async function loadBankTransactions(): Promise<BankTransaction[]> {
@@ -124,15 +143,26 @@ export async function loadSapTransactions(): Promise<SapTransaction[]> {
 }
 
 export async function loadUnmatchedCases(): Promise<UnmatchedCase[]> {
-  if (cachedUnmatchedCases) return cachedUnmatchedCases;
-  cachedUnmatchedCases = await readDataFile<UnmatchedCase[]>('unmatched-cases.json');
-  return cachedUnmatchedCases;
+  if (!cachedUnmatchedCases) {
+    cachedUnmatchedCases = await readDataFile<UnmatchedCase[]>('unmatched-cases.json');
+  }
+  if (resolvedBankIds.size === 0) return cachedUnmatchedCases;
+  return cachedUnmatchedCases.filter((c) => !resolvedBankIds.has(c.bankId));
 }
 
 export async function loadMatchedRecords(): Promise<MatchedRecord[]> {
-  if (cachedMatchedRecords) return cachedMatchedRecords;
-  cachedMatchedRecords = await readDataFile<MatchedRecord[]>('matched-records.json');
-  return cachedMatchedRecords;
+  if (!cachedMatchedRecords) {
+    cachedMatchedRecords = await readDataFile<MatchedRecord[]>('matched-records.json');
+  }
+  if (resolvedBankIds.size === 0) return cachedMatchedRecords;
+  const synthetic: MatchedRecord[] = [...resolvedBankIds].map((bankId) => ({
+    id: `MANUAL-${bankId}`,
+    bankId,
+    sapId: `SAP-MANUAL-${bankId}`,
+    ruleUsed: 'ManualMatch',
+    matchedAt: resolvedTimestamps.get(bankId) ?? new Date().toISOString(),
+  }));
+  return [...cachedMatchedRecords, ...synthetic];
 }
 
 export async function loadSession(): Promise<ReconciliationSession> {
@@ -168,4 +198,5 @@ export function clearDataCache(): void {
   cachedMatchedRecords = null;
   cachedSession = null;
   cachedHistoricalPatterns = null;
+  resetResolvedState();
 }

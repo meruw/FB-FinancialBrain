@@ -372,7 +372,8 @@ Session 2 additions: `/api/advisor` (Resolution Advisor), `buildSystemPrompt()`
 shared prompt builder, `findVendorProfile()`, `resolveTransaction()`, per-call
 timeouts, SDK retries disabled, data enriched to 12 bank txns / 8 unmatched cases.
 
-Session 3 additions: `/api/simulate` (What-If Simulator), `computeCloseProbability()`
+Session 3 additions: `/api/simulate` (What-If Simulator), `/api/resolve` (accept recommendation → live probability update),
+`computeCloseProbability()`
 and `computeNextCloseProjection()` utilities, close probability now computed from Brain
 data (not Claude), narrator projection fields injected from code, brief switched to Haiku
 with targeted Brain context, narrator switched to `buildNarratorContext()` (targeted Brain),
@@ -401,6 +402,7 @@ with periodStart/periodEnd/accountNumber/currency/sapBalance.
 | POST | `/api/narrate` | AI end-of-session narrative |
 | POST | `/api/advisor` | AI resolution advisor — actionType + steps[] for one transaction |
 | POST | `/api/simulate` | What-If Simulator — projects close probability for a given scenario |
+| POST | `/api/resolve` | Accept a recommendation — marks resolved, returns updated closeProbability |
 
 **Your job (ongoing):**
 - Fix bugs in existing routes / prompts / schemas
@@ -701,3 +703,76 @@ because the judge can see exactly why it's 62% and not higher.
 The formula lives in `server/src/utils/closeProbability.ts` and is
 documented in `closeProbability.formula` inside `data/financial-brain.json`.
 Point at the file if pressed — the code is readable in 30 seconds.
+
+## 23. Production FastBank integration — how this connects to the real product
+
+This is the question every judge will ask after the demo. Have a crisp answer ready.
+The architecture was designed so that production integration requires changing exactly
+**three files** and zero feature logic.
+
+### The Brain: from JSON file to database
+
+Today: `server/src/services/brain.ts` reads `data/financial-brain.json` and caches it.
+
+In production:
+```ts
+// services/brain.ts — only this file changes
+export async function loadBrain(): Promise<FinancialBrain> {
+  return db.query('SELECT * FROM financial_brains WHERE customer_id = ?', [customerId]);
+}
+```
+
+Every feature route calls `loadBrain()`. None of them change. The Brain becomes
+per-customer automatically the moment this function reads from a DB instead of a file.
+
+### Transaction data: from JSON to FastBank API
+
+Today: `server/src/services/data.ts` reads `bank-transactions.json`, `sap-transactions.json`, etc.
+
+In production, each loader swaps its `readDataFile` call for a FastBank API call:
+```ts
+export async function loadBankTransactions(): Promise<BankTransaction[]> {
+  return fastbankClient.getTransactions({ sessionId, account });
+}
+```
+
+All routes that call `loadBankTransactions()` get live data automatically.
+The cache layer (`cachedBankTransactions`) continues to work as a within-request cache.
+
+### Resolve: from in-memory Set to FastBank matching engine
+
+Today: `POST /api/resolve` calls `markResolved(bankId)` which adds to a Set in process memory.
+The set resets on server restart or `POST /api/data/reload`.
+
+In production:
+```ts
+export function markResolved(bankId: string, actionType: string): Promise<void> {
+  return fastbankClient.applyResolution({ bankId, actionType });
+}
+```
+
+The FastBank matching engine applies the resolution and the Brain receives the outcome
+as a new training signal — closing the learning loop.
+
+### The Brain learning loop
+
+The key architectural promise is that every human decision feeds back into the Brain.
+After production integration, the flow is:
+
+1. Session opens → Brain reads 7 months of this customer's history from DB
+2. Accountant clicks "Accept" on TRACE recommendation → `POST /api/resolve`
+3. FastBank applies the resolution → outcome written back to Brain history table
+4. Next session opens → Brain already knows this vendor's pattern resolved cleanly
+
+This is what "the more you use it, the smarter it gets" means operationally.
+For the demo, step 3 is simulated (in-memory Set). Steps 1, 2, and 4 are real
+in the sense that the data shapes and API contracts are production-ready.
+
+### The pitch answer, verbatim
+
+> "In production, we sit as an intelligence layer between FastBank's data and
+> your accountant's screen. The Brain reads from your FastBank session via API,
+> every resolution your team makes is written back as a training signal, and the
+> Brain updates its vendor profiles and close projections after each session.
+> Nothing changes in how your team uses FastBank today. It just gets smarter
+> about your company with every close."
