@@ -78,7 +78,7 @@ briefRouter.post('/', async (req, res) => {
       user,
       model: 'claude-haiku-4-5-20251001',
       temperature: 0,
-      maxTokens: 700,
+      maxTokens: 1024,
     });
     const partial = briefSchema.omit({ closeProbability: true }).parse(extractJson(text));
     const validated: Brief = { ...partial, closeProbability };
