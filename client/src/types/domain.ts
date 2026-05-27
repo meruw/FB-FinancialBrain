@@ -181,6 +181,22 @@ export interface AdvisorStep {
   instruction: string;
 }
 
+export interface AdvisorProvenance {
+  historicalAccuracy: {
+    rate: number;
+    matchCount: number;
+  };
+  patternSource: {
+    hitCount: number;
+    windowSize: number;
+    windowUnit: 'closes';
+  };
+  lastSimilarAction: {
+    occurredAt: string;
+    outcome: 'accepted' | 'rejected' | 'modified' | 'skipped';
+  } | null;
+}
+
 export interface AdvisorResolution {
   transactionId: string;
   action: string;
@@ -188,7 +204,9 @@ export interface AdvisorResolution {
   reasoning: string;
   steps: AdvisorStep[];
   risk: 'critical' | 'high' | 'medium' | 'low';
+  confidenceScore: number;
   brainBasis: string;
+  provenance: AdvisorProvenance | null;
 }
 
 export type SimulationScenario = 'tolerance_change' | 'vendor_fix' | 'threshold_change';

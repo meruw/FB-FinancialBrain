@@ -57,24 +57,32 @@
       "vendor": "CONSTRUTECH",
       "issue": "date_tolerance_miss",
       "monthsAppeared": 6,
+      "matchCount": 17,
+      "lastOccurrence": "2026-03-28T00:00:00Z",
       "recommendation": "Raise tolerance to 5 days. Would have auto-resolved 11 of 13 historical cases."
     },
     {
       "vendor": "BRAUTOTEST",
       "issue": "sap_already_matched",
       "monthsAppeared": 4,
+      "matchCount": 12,
+      "lastOccurrence": "2026-03-15T00:00:00Z",
       "recommendation": "Pre-session audit of recently matched BRAUTOTEST SAP documents before opening reconciliation."
     },
     {
       "vendor": null,
       "issue": "no_sap_counterpart",
       "monthsAppeared": 7,
+      "matchCount": null,
+      "lastOccurrence": null,
       "recommendation": "Bank fees (commissions, SPEI charges) appear in all 7 sessions without a GL counterpart. Establish same-day GL posting rule for bank-originated fees."
     },
     {
       "vendor": "AGENCIA ADUANAL",
       "issue": "amount_mismatch",
       "monthsAppeared": 4,
+      "matchCount": 9,
+      "lastOccurrence": "2026-02-22T00:00:00Z",
       "recommendation": "Apply 2% amount tolerance for this vendor. Duty adjustments cause consistent small-amount variances that a rigid match rule rejects unnecessarily."
     }
   ]

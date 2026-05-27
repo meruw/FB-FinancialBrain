@@ -71,6 +71,9 @@ export interface HistoricalPatterns {
     vendor: string | null;
     issue: string;
     monthsAppeared: number;
+    matchCount: number | null;
+    lastOccurrence: string | null;
+    recommendation: string;
   }>;
 }
 
