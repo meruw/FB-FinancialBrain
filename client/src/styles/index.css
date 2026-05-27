@@ -2,8 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Add app-wide custom CSS here when needed.
-   Prefer Tailwind utilities. Reserve this file for:
-   - keyframes the Brain effects use
-   - global resets that Tailwind doesn't cover
-   - typography you want everywhere */
+/* ── Brand tokens ────────────────────────────────────────────────────────────── */
+:root {
+  --fb-brand:    #8E31B5;
+  --fb-blue:     #5793EC;
+  --fb-bg:       #EDF2FA;
+  --fb-surface:  #ffffff;
+  --fb-border:   #e2e8f0;
+  --fb-text:     #111827;
+  --fb-muted:    #9ca3af;
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────────── */
+body {
+  font-family: 'Mulish', 'Inter', system-ui, sans-serif;
+}
+
+/* Gauges and headings use Mulish bold */
+.font-mulish {
+  font-family: 'Mulish', system-ui, sans-serif;
+}
+
+/* ── em.brand — auto-style within Brain cards and recommendation text ─────── */
+em.brand,
+.recommendation-text em {
+  font-style: normal;
+  color: var(--fb-brand);
+  font-weight: 600;
+}

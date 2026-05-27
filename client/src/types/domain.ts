@@ -50,10 +50,15 @@ export interface UnmatchedCase {
 export interface ReconciliationSession {
   id: string;
   period: string;
+  periodStart?: string;
+  periodEnd?: string;
   account: string;
+  accountNumber?: string;
+  currency?: string;
   status: 'open' | 'in_progress' | 'closed';
   openedAt: string;
   endingBalance: number;
+  sapBalance?: number;
   difference: number;
   totals: {
     bank: { count: number; sum: number };

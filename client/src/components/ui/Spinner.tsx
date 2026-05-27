@@ -1,8 +1,12 @@
-export function Spinner() {
+interface SpinnerProps {
+  size?: number;
+}
+
+export function Spinner({ size = 20 }: SpinnerProps) {
   return (
     <svg
-      width={20}
-      height={20}
+      width={size}
+      height={size}
       viewBox="0 0 20 20"
       fill="none"
       className="animate-spin text-brain-accent"

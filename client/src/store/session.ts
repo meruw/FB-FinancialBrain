@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 
-export type SessionStatus = 'briefing' | 'working' | 'closed';
+export type SessionStatus = 'landing' | 'briefing' | 'working' | 'closed';
 
 interface SessionState {
   sessionId: string;
   status: SessionStatus;
   selectedTransactionId: string | null;
+  startDemo: () => void;
   openSession: () => void;
   closeSession: () => void;
   selectTransaction: (id: string | null) => void;
@@ -13,8 +14,9 @@ interface SessionState {
 
 export const useSessionStore = create<SessionState>((set) => ({
   sessionId: 'SESSION-MAY-2026',
-  status: 'briefing',
+  status: 'landing',
   selectedTransactionId: null,
+  startDemo: () => set({ status: 'briefing' }),
   openSession: () => set({ status: 'working' }),
   closeSession: () => set({ status: 'closed' }),
   selectTransaction: (id) => set({ selectedTransactionId: id }),

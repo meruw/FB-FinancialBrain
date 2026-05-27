@@ -12,6 +12,8 @@ import type {
   DebugDiagnosis,
   RiskAssessment,
   Narrative,
+  AdvisorResolution,
+  ResolveResult,
   FinancialBrain,
   ReconciliationSession,
   BankTransaction,
@@ -62,6 +64,12 @@ export const api = {
 
   getNarrative: (sessionId: string) =>
     postJson<{ sessionId: string }, Narrative>('/api/narrate', { sessionId }),
+
+  getAdvisor: (transactionId: string) =>
+    postJson<{ transactionId: string }, AdvisorResolution>('/api/advisor', { transactionId }),
+
+  resolve: (transactionId: string, actionType: string) =>
+    postJson<{ transactionId: string; actionType: string }, ResolveResult>('/api/resolve', { transactionId, actionType }),
   
 // Data endpoints
   getBrain: () => getJson<FinancialBrain>('/api/data/brain'),
