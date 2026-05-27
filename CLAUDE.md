@@ -95,6 +95,7 @@ server/                Express backend
       debug.ts           POST /api/debug
       risk.ts            POST /api/risk
       narrator.ts        POST /api/narrate
+      advisor.ts         POST /api/advisor
     services/
       claude.ts          The ONLY place the Anthropic SDK is touched
       brain.ts           Loads + caches financial-brain.json as a prompt string
@@ -350,6 +351,7 @@ implemented and tested. Do not re-scaffold — extend or fix instead.
 | POST | `/api/debug` | AI match debugger for one transaction |
 | POST | `/api/risk` | AI risk assessment for one transaction |
 | POST | `/api/narrate` | AI end-of-session narrative |
+| POST | `/api/advisor` | AI resolution advisor — actionType + steps[] for one transaction |
 
 **Your job (ongoing):**
 - Fix bugs in existing routes / prompts / schemas

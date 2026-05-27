@@ -6,7 +6,9 @@ import { logger } from '../utils/logger.js';
  * One client, reused. Anthropic SDK reads ANTHROPIC_API_KEY from env automatically,
  * but we pass it explicitly for clarity.
  */
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+// maxRetries=0 because every route already falls back to a mock on failure.
+// Retries just delay the fallback without adding value in a demo context.
+const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 0 });
 
 export interface ClaudeCallOptions {
   /** Override the default model for this call. Useful for Narrator -> Opus. */
