@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
-import { loadBrain } from '../services/brain.js';
+import { loadBrain, findVendorProfile } from '../services/brain.js';
 import { loadBankTransactions, loadUnmatchedCases } from '../services/data.js';
 import { riskSchema, type RiskAssessment } from '../schemas/risk.js';
 import { riskPrompt } from '../prompts/risk.js';
@@ -44,10 +44,7 @@ riskRouter.post('/', async (req, res) => {
       (t) => t.id !== transactionId && t.date === bankTxn.date && t.amount === bankTxn.amount
     );
 
-    const vendorProfile =
-      brainData.vendorProfiles.find((vp) =>
-        bankTxn.description.toUpperCase().includes(vp.vendor.toUpperCase())
-      ) ?? null;
+    const vendorProfile = findVendorProfile(brainData, bankTxn.description);
 
     const accountPatterns = Object.values(brainData.accountPatterns);
     const historicalCloseRate =

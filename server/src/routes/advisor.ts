@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
-import { loadBrain } from '../services/brain.js';
+import { loadBrain, findVendorProfile } from '../services/brain.js';
 import { loadBankTransactions, loadSapTransactions, loadUnmatchedCases } from '../services/data.js';
 import { advisorSchema, type AdvisorOutput } from '../schemas/advisor.js';
 import { advisorPrompt } from '../prompts/advisor.js';
 import { advisorMock } from '../mocks/advisor.js';
 import { findSapCandidates } from '../utils/matching.js';
+import { resolveTransaction } from '../utils/transaction.js';
 import { parseBody } from '../utils/validate.js';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
@@ -35,21 +36,11 @@ advisorRouter.post('/', async (req, res) => {
       loadBrain(),
     ]);
 
-    const bankTxn = bankTxns.find((t) => t.id === transactionId);
-    if (!bankTxn) {
-      return res.status(404).json({ error: `Transaction ${transactionId} not found` });
-    }
+    const resolved = resolveTransaction(transactionId, bankTxns, unmatchedCases, res);
+    if (!resolved) return;
 
-    const unmatchedCase = unmatchedCases.find((c) => c.bankId === transactionId);
-    if (!unmatchedCase) {
-      return res.status(404).json({ error: `No unmatched case found for ${transactionId}` });
-    }
-
-    const vendorProfile =
-      brainData.vendorProfiles.find((vp) =>
-        bankTxn.description.toUpperCase().includes(vp.vendor.toUpperCase()),
-      ) ?? null;
-
+    const { bankTxn, unmatchedCase } = resolved;
+    const vendorProfile = findVendorProfile(brainData, bankTxn.description);
     const sapCandidates = findSapCandidates(bankTxn, sapTxns);
 
     const { system, user } = advisorPrompt({

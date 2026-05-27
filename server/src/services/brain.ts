@@ -83,3 +83,19 @@ export async function brainAsPromptContext(): Promise<string> {
   const brain = await loadBrain();
   return JSON.stringify(brain, null, 2);
 }
+
+/**
+ * Finds the vendor profile for a bank transaction by matching vendor names
+ * against the transaction description. Returns null if the vendor is unknown.
+ * Used by any route that needs targeted vendor context instead of the full Brain.
+ */
+export function findVendorProfile(
+  brain: FinancialBrain,
+  transactionDescription: string,
+): VendorProfile | null {
+  return (
+    brain.vendorProfiles.find((vp) =>
+      transactionDescription.toUpperCase().includes(vp.vendor.toUpperCase()),
+    ) ?? null
+  );
+}

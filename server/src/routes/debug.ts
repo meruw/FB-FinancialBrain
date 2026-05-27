@@ -7,6 +7,7 @@ import { debugSchema, type DebugDiagnosis } from '../schemas/debug.js';
 import { debugPrompt } from '../prompts/debug.js';
 import { debugMock } from '../mocks/debug.js';
 import { findSapCandidates } from '../utils/matching.js';
+import { resolveTransaction } from '../utils/transaction.js';
 import { parseBody } from '../utils/validate.js';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
@@ -35,16 +36,10 @@ debugRouter.post('/', async (req, res) => {
       brainAsPromptContext(),
     ]);
 
-    const bankTxn = bankTxns.find((t) => t.id === transactionId);
-    if (!bankTxn) {
-      return res.status(404).json({ error: `Transaction ${transactionId} not found` });
-    }
+    const resolved = resolveTransaction(transactionId, bankTxns, unmatchedCases, res);
+    if (!resolved) return;
 
-    const unmatchedCase = unmatchedCases.find((c) => c.bankId === transactionId);
-    if (!unmatchedCase) {
-      return res.status(404).json({ error: `No unmatched case found for ${transactionId}` });
-    }
-
+    const { bankTxn, unmatchedCase } = resolved;
     const sapCandidates = findSapCandidates(bankTxn, sapTxns);
 
     const { system, user } = debugPrompt({
