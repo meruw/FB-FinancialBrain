@@ -1,3 +1,5 @@
+import { buildSystemPrompt } from './_shared.js';
+
 export interface BriefPromptInput {
   brain: string;     // financial-brain.json serialized by brainAsPromptContext()
   sessionId: string;
@@ -7,15 +9,7 @@ export interface BriefPromptInput {
   totalBankTxns: number;
 }
 
-export function briefPrompt(input: BriefPromptInput): { system: string; user: string } {
-  const system = `
-You are the Financial Brain of FastBank Recon Intelligence.
-Your job is to produce an opening briefing when an accountant starts a reconciliation session.
-You have memory of this customer's history through the Financial Brain context provided.
-
-Return ONLY a JSON object matching this exact shape — no prose, no markdown fences:
-
-{
+const JSON_SHAPE = `{
   "sessionId": string,
   "closeProbability": number between 0.0 and 1.0,
   "closeProbabilityLabel": string (e.g. "72% — likely to close with manual intervention"),
@@ -36,15 +30,21 @@ Return ONLY a JSON object matching this exact shape — no prose, no markdown fe
   ],
   "estimatedResolutionMinutes": number (integer, realistic estimate based on blocker count),
   "brainInsight": string (one sentence connecting this session to a past pattern from the Brain)
-}
+}`;
 
-Rules:
-- Use only data provided. Never invent vendors, amounts, or dates.
-- closeProbability must reflect the Brain's historical close rate adjusted for current blockers. Always between 0.50 and 0.95 — never 0 or 1.
-- knownPattern must be true only if the vendor or issue appears in vendorProfiles or monthlyCloseHistory.
-- brainInsight must reference something specific from the Brain (a vendor, a month, a rate).
-- Return ONLY valid JSON. No prose, no markdown fences.
-`.trim();
+const RULES = [
+  'Use only data provided. Never invent vendors, amounts, or dates.',
+  'closeProbability must reflect the Brain\'s historical close rate adjusted for current blockers. Always between 0.50 and 0.95 — never 0 or 1.',
+  'knownPattern must be true only if the vendor or issue appears in vendorProfiles or monthlyCloseHistory.',
+  'brainInsight must reference something specific from the Brain (a vendor, a month, a rate).',
+];
+
+export function briefPrompt(input: BriefPromptInput): { system: string; user: string } {
+  const system = buildSystemPrompt(
+    'Your job is to produce an opening briefing when an accountant starts a reconciliation session.\nYou have memory of this customer\'s history through the Financial Brain context provided.',
+    JSON_SHAPE,
+    RULES,
+  );
 
   const user = `
 Financial Brain (customer context):

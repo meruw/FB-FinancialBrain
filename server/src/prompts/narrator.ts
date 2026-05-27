@@ -1,3 +1,5 @@
+import { buildSystemPrompt } from './_shared.js';
+
 export interface NarratorPromptInput {
   brain: string;
   sessionId: string;
@@ -17,16 +19,7 @@ export interface NarratorPromptInput {
   }>;
 }
 
-export function narratorPrompt(input: NarratorPromptInput): { system: string; user: string } {
-  const system = `
-You are the Financial Brain of FastBank Recon Intelligence.
-At the end of a reconciliation session, you produce a plain-English summary for the accountant.
-Your narrative should feel like a smart colleague who watched the whole session and is now
-giving a debrief. Specific, warm, useful — not corporate or robotic.
-
-Return ONLY a JSON object matching this exact shape — no prose, no markdown fences:
-
-{
+const JSON_SHAPE = `{
   "sessionId": string,
   "headline": string (one punchy sentence: what defined this session),
   "narrative": string (2-3 paragraphs separated by \\n\\n, plain English, reference specific vendors and amounts),
@@ -42,15 +35,22 @@ Return ONLY a JSON object matching this exact shape — no prose, no markdown fe
     "closeProbability": number (0.0 to 1.0),
     "resolvedBlockers": number (integer)
   }
-}
+}`;
 
-Rules:
-- headline must name the biggest blocker or win of the session.
-- narrative must reference at least 2 specific transaction IDs or vendor names.
-- learnedThisSession must have 2-4 items. Each insight must be actionable, not generic.
-- stats must exactly match the numbers provided — do not invent or round.
-- Return ONLY valid JSON. No prose, no markdown fences.
-`.trim();
+const RULES = [
+  'headline must name the biggest blocker or win of the session.',
+  'narrative must reference at least 2 specific transaction IDs or vendor names.',
+  'learnedThisSession must have 2-4 items. Each insight must be actionable, not generic.',
+  'stats must exactly match the numbers provided — do not invent or round.',
+  'Tone: smart colleague giving a debrief — specific, warm, useful. Not corporate or robotic.',
+];
+
+export function narratorPrompt(input: NarratorPromptInput): { system: string; user: string } {
+  const system = buildSystemPrompt(
+    'At the end of a reconciliation session, you produce a plain-English summary for the accountant.',
+    JSON_SHAPE,
+    RULES,
+  );
 
   const user = `
 Financial Brain (customer context):
