@@ -101,12 +101,14 @@ server/                Express backend
       brain.ts           Loads + caches financial-brain.json as a prompt string
       data.ts            Loads + caches all other data/*.json files
     prompts/             Pure functions: input -> { system, user }
+      _shared.ts         buildSystemPrompt() — shared persona + JSON boilerplate
     schemas/             Zod schemas - the JSON contract per feature
     mocks/               Fallback responses per feature
     utils/
       logger.ts          Tiny structured logger
       validate.ts        parseBody() — DRY Zod input validation for routes
       matching.ts        findSapCandidates() — date+amount window search
+      transaction.ts     resolveTransaction() — bankTxn + unmatchedCase lookup with 404s
 
 data/                  Mock data (the Brain + bank/SAP transactions)
   financial-brain.json   ← the protagonist
@@ -212,6 +214,31 @@ Key differences from the original skeleton:
   computed number (close probability, totals), compute it in code and pass
   it in. The AI's job is judgment and language, not arithmetic.
 
+### Prompt builder — use `buildSystemPrompt()`
+
+Every prompt file **must** use `buildSystemPrompt()` from `prompts/_shared.ts`.
+Do not copy-paste the persona or the JSON-only rule — they live there once.
+
+```ts
+import { buildSystemPrompt } from './_shared.js';
+
+const system = buildSystemPrompt(
+  'Your job is to...', // feature-specific role
+  JSON_SHAPE,          // the exact JSON object Claude must return
+  RULES,               // string[] — feature-specific rules only
+);
+// The persona and "Return ONLY valid JSON" rule are added automatically.
+```
+
+### Brain context — full vs. targeted
+
+- **Full Brain JSON** (`brainAsPromptContext()`): use for brief and narrator,
+  where Claude needs the complete customer picture.
+- **Targeted vendor profile** (`findVendorProfile()` from `services/brain.ts`):
+  use for risk and advisor. Pass only the matching vendor profile + minimal
+  Brain metadata. Prevents Claude from referencing unrelated transaction IDs
+  that appear elsewhere in the Brain JSON.
+
 ## 7. The Financial Brain pattern
 
 `server/src/services/brain.ts` is the ONLY place that knows where the Brain
@@ -287,6 +314,10 @@ after data is loaded.
   }
   ```
 - **DEMO_MODE check before any async work.** In a route, check `env.DEMO_MODE` immediately after validating the body — before loading data or calling `brainAsPromptContext()`. Keeps demo fast.
+- **Always pass `timeoutMs` to `callClaude()`.** The SDK default is 10 minutes — too long for a demo. Targets: brief/debug/risk = 8000ms (default), advisor = 12000ms, narrator = 15000ms. On timeout the route catch falls back to mock automatically.
+- **SDK retries are disabled** (`maxRetries: 0` on the Anthropic client). Routes already fall back to mocks on failure — retries would just delay the fallback by 3× the timeout. Do not re-enable.
+- **Use `resolveTransaction()` for routes that need bankTxn + unmatchedCase.** It handles both 404s in one call. Import from `utils/transaction.ts`. Risk is the exception — it accepts matched transactions too, so it does its own lookup.
+- **Use `findVendorProfile()` from `services/brain.ts`** instead of inlining `.find()` on `vendorProfiles`. It's tested and handles case-insensitive matching.
 
 ## 10. Team roles — read this first if you're an AI assistant
 
@@ -330,9 +361,14 @@ and update `domain.ts` + the matching Zod schema together.
 
 **Your territory:** everything inside `server/`.
 
-**STATUS (as of Session 1 — 2026-05-26): BACKEND IS COMPLETE. FRONTEND: close-guarantee done, Brain panel placeholder in App.tsx.**
-All 4 AI feature routes, the data router, and all supporting services are
-implemented and tested. Do not re-scaffold — extend or fix instead.
+**STATUS (as of Session 2 — 2026-05-27): BACKEND IS COMPLETE.**
+All 5 AI feature routes, the data router, and all supporting services are
+implemented, tested with real Claude calls, and validated end-to-end.
+Do not re-scaffold — extend or fix instead.
+
+Session 2 additions: `/api/advisor` (Resolution Advisor), `buildSystemPrompt()`
+shared prompt builder, `findVendorProfile()`, `resolveTransaction()`, per-call
+timeouts, SDK retries disabled, data enriched to 12 bank txns / 8 unmatched cases.
 
 **All live endpoints:**
 
