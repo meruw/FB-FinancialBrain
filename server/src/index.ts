@@ -4,6 +4,7 @@ import { env } from './env.js';
 import { logger } from './utils/logger.js';
 import { loadBrain } from './services/brain.js';
 import { warmupCache } from './services/data.js';
+import { callClaude } from './services/claude.js';
 import { dataRouter } from './routes/data.js';
 import { briefRouter } from './routes/brief.js';
 import { debugRouter } from './routes/debug.js';
@@ -67,4 +68,11 @@ app.listen(env.PORT, () => {
   Promise.all([loadBrain(), warmupCache()]).catch((err) =>
     logger.error('startup.warmup.fail', { error: String(err) })
   );
+
+  // Establish the Anthropic TLS connection on startup so the first demo call isn't cold.
+  // 1-token ping — fire and forget, silent on failure, skipped in demo mode.
+  if (!env.DEMO_MODE) {
+    callClaude({ system: 'ping', user: 'ping', maxTokens: 1, timeoutMs: 8000 })
+      .catch(() => {});
+  }
 });
