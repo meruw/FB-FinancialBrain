@@ -638,7 +638,7 @@ The last thing visible on screen when the demo ends must be:
 
 Followed immediately by:
 
-> Next close projection: 84% (+12% from today's 72%)
+> Next close projection: 76% (+14% from today's 62%)
 > Sessions until projected 95%+ close rate: **3**
 
 **"3 sessions until 95%+ close rate"** is the payoff of the entire
@@ -683,10 +683,13 @@ not *"the AI estimated it."* That answer kills credibility.
 
 The correct answer, verbatim:
 
-> "It's based on your historical data. Sessions with this profile of
-> exceptions — these vendor patterns, this number of unmatched items —
-> closed successfully 72% of the time in your last 6 months. The AI
-> analyzes the pattern. It doesn't invent the number."
+> "It's a deterministic formula, not AI. We take your account's historical
+> close rate — 89% over 7 sessions for this account — and adjust it down
+> based on how hard today's open cases are to resolve. Each exception type
+> has a known resolvability score built from Brain history: a date tolerance
+> miss is 80% fixable, a suspected duplicate is only 10% fixable. Today's
+> mix of 8 open cases brings the probability down to 62%. The AI writes the
+> label. It doesn't touch the number."
 
 This is honest, accurate, and more impressive than a black-box answer
 because the judge can see exactly why it's 62% and not higher.
