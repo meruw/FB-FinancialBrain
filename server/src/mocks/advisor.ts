@@ -25,6 +25,12 @@ export const advisorMock: AdvisorOutput = {
     },
   ],
   risk: 'low',
+  confidenceScore: 0.85,
   brainBasis:
     'CONSTRUTECH has triggered date_tolerance_miss 6 times in the last 6 months. The Brain recommends a permanent 5-day tolerance for this vendor.',
+  provenance: {
+    historicalAccuracy: { rate: 0.73, matchCount: 17 },
+    patternSource: { hitCount: 6, windowSize: 7, windowUnit: 'closes' },
+    lastSimilarAction: { occurredAt: '2026-03-28T00:00:00Z', outcome: 'accepted' },
+  },
 };

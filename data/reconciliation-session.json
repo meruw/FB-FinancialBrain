@@ -1,10 +1,15 @@
 {
   "id": "SESSION-APR-2026",
   "period": "April 2026",
+  "periodStart": "2026-04-01",
+  "periodEnd": "2026-04-30",
   "account": "Main Checking",
+  "accountNumber": "****4521",
+  "currency": "MXN",
   "status": "in_progress",
   "openedAt": "2026-05-02T08:00:00Z",
   "endingBalance": 482310.50,
+  "sapBalance": 269700.00,
   "difference": -239600.00,
   "totals": {
     "bank": { "count": 12, "sum": 270300.00 },
