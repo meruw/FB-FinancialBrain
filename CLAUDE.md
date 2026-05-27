@@ -71,8 +71,8 @@ client/                Vite + React frontend
     components/
       brain/             Brain panel, gauges, learning indicator
       reconciliation/    Tables, transaction rows, session header
-      ui/                Generic primitives (Card, Button, Badge)
-      effects/           Typewriter, count-up, animated gauge
+      ui/                Card.tsx, Badge.tsx, Spinner.tsx (built — use these, don't re-create)
+      effects/           Typewriter, count-up, animated gauge (not yet built)
     features/            ONE FOLDER PER AI FEATURE - vertical slice
       close-guarantee/
       match-debugger/
@@ -136,8 +136,22 @@ server/src/mocks/<feature>.ts        Fallback response. Realistic.
 ```
 client/src/features/<feature>/<Feature>.tsx       Component
 client/src/features/<feature>/use<Feature>.ts     Hook (calls api.ts)
-client/src/features/<feature>/<Feature>.types.ts  Local types
-client/src/features/<feature>/<Feature>.mock.ts   Frontend fallback (optional)
+client/src/features/<feature>/<Feature>.types.ts  Local types (re-exports from domain.ts + CloseGuaranteeProps)
+client/src/features/<feature>/<Feature>.mock.ts   Frontend fallback — REQUIRED, not optional
+```
+
+Hook return shape convention (enforced across all features):
+```ts
+// Always return { data, loading, error } — not brief/isLoading/etc.
+export function useFeature(sessionId: string): { data: T | null; loading: boolean; error: string | null }
+```
+
+Component fallback convention: the component owns the mock decision, not the hook.
+```ts
+// Hook: just call api, surface error
+const { data, loading, error } = useFeature(sessionId);
+// Component: apply fallback
+const item = data ?? (error !== null ? featureMock : null);
 ```
 
 ### Route handler skeleton (copy this)
@@ -303,9 +317,9 @@ change its response shape, open a conversation with the backend engineer first
 and update `domain.ts` + the matching Zod schema together.
 
 **Feature order (build in this sequence):**
-1. Layout shell + Brain panel with static data (unblocks everything)
-2. `close-guarantee` (Brief) — simplest, validates the full pipeline
-3. `match-debugger` — select a transaction, get diagnosis
+1. ~~Layout shell + Brain panel with static data~~ ✅ App.tsx shell done; Brain panel placeholder in right rail
+2. ~~`close-guarantee` (Brief)~~ ✅ CloseGuarantee.tsx, useCloseGuarantee.ts, CloseGuarantee.mock.ts all shipped
+3. `match-debugger` — select a transaction, get diagnosis ← **next**
 4. `risk-firewall` — risk badge on each unmatched row
 5. `narrator` — end-of-session summary modal
 
@@ -315,7 +329,7 @@ and update `domain.ts` + the matching Zod schema together.
 
 **Your territory:** everything inside `server/`.
 
-**STATUS (as of Session 1 — 2026-05-26): BACKEND IS COMPLETE.**
+**STATUS (as of Session 1 — 2026-05-26): BACKEND IS COMPLETE. FRONTEND: close-guarantee done, Brain panel placeholder in App.tsx.**
 All 4 AI feature routes, the data router, and all supporting services are
 implemented and tested. Do not re-scaffold — extend or fix instead.
 
@@ -414,18 +428,50 @@ Three animation libraries are in the project. Each has exactly one job:
 
 | Library | Use it for | Do NOT use it for |
 |---|---|---|
-| **Framer Motion** | Page/component entrance, layout shifts, modal transitions, typewriter text | SVG arc tweens, Lottie |
-| **anime.js v4** | SVG `strokeDashoffset` arc gauge animations, count-up numbers | Layout, Lottie |
+| **Framer Motion** | Gauge fill (recharts-driven), entrance transitions, typewriter text | anime.js's job, Lottie |
+| **anime.js v4** | Reserved for future raw SVG arc animations if recharts is insufficient | Recharts-based gauges, layout, Lottie |
 | **@lottiefiles/dotlottie-react** | Brain "thinking" Lottie in the right rail while an AI call is in flight | General loading spinners, any non-Lottie use |
 
-Import pattern for anime.js v4: `import anime from 'animejs'`.
-Import pattern for Lottie: `import { DotLottieReact } from '@lottiefiles/dotlottie-react'`.
+**Correct import for anime.js v4** (v4 removed the default export):
+```ts
+import { animate } from 'animejs';   // ✅
+import anime from 'animejs';         // ❌ no default export in v4
+```
 
-SVG gauge pattern (close-guarantee and any future gauge):
-- `strokeDasharray="377 503"` (270° track, 90° invisible gap; numbers are 0.75 × 2π × r and 2π × r)
-- Animate `strokeDashoffset` from `TRACK` (empty) to `TRACK * (1 − pct)` with anime.js
-- `transform="rotate(135 cx cy)"` positions the gap at the bottom of the dial
-- Count-up: `anime({ targets: obj, value: target, update: () => setState(...) })`
+**Correct import for Lottie:**
+```ts
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+```
+
+**Recharts + Framer Motion gauge pattern** (used in close-guarantee — copy this):
+```tsx
+// 1. Animate a number with framer-motion imperative API
+const controls = animate(0, targetPct, {
+  duration: 1.5,
+  ease: 'easeOut',
+  onUpdate: (v) => setGaugePct(Math.round(v)),
+});
+// cleanup: controls.stop()
+
+// 2. Feed that number into RadialBarChart
+<RadialBarChart startAngle={180} endAngle={0} data={[{ value: gaugePct }]}>
+  <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+  <RadialBar dataKey="value" background={{ fill: '#1e293b' }} fill="#7F77DD" cornerRadius={8} />
+</RadialBarChart>
+// PolarAngleAxis with domain={[0,100]} is required — without it recharts
+// auto-scales and 72 fills 100% instead of 72%.
+```
+
+**Typewriter pattern** (used in close-guarantee — copy this):
+```ts
+let i = 0;
+const id = setInterval(() => {
+  i += 1;
+  setDisplayed(text.slice(0, i));
+  if (i >= text.length) { clearInterval(id); setTyping(false); }
+}, 30);
+// cleanup: clearInterval(id)
+```
 
 ## 15. Out of scope (do not build)
 

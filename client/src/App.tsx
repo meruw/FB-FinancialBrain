@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { useSessionStore } from '@/store/session';
 import { useDataStore } from '@/store/data';
+import { CloseGuarantee } from '@/features/close-guarantee/CloseGuarantee';
 
 function App() {
   const status = useSessionStore((s) => s.status);
-  const { isLoading, error, loadAll } = useDataStore((s) => ({
-    isLoading: s.isLoading,
-    error: s.error,
-    loadAll: s.loadAll,
-  }));
+  const sessionId = useSessionStore((s) => s.sessionId);
+  const isLoading = useDataStore((s) => s.isLoading);
+  const error = useDataStore((s) => s.error);
+  const loadAll = useDataStore((s) => s.loadAll);
 
   useEffect(() => {
     void loadAll();
@@ -49,12 +49,11 @@ function App() {
     );
   }
 
+
   if (status === 'briefing') {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-brain-bg">
-        <span className="text-2xl font-semibold tracking-wide text-brain-accent">
-          Brain Briefing
-        </span>
+      <div className="flex min-h-screen w-screen items-start justify-center overflow-y-auto bg-brain-bg py-12">
+        <CloseGuarantee sessionId={sessionId} />
       </div>
     );
   }
