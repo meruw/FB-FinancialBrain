@@ -1,65 +1,138 @@
-import { useEffect, useState } from 'react';
-import { animate } from 'framer-motion';
-import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, ArrowRight, Sparkles, XCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useSessionStore } from '@/store/session';
 import { Spinner } from '@/components/ui/Spinner';
-import { Badge } from '@/components/ui/Badge';
 import { useCloseGuarantee } from './useCloseGuarantee';
 import { briefMock } from './CloseGuarantee.mock';
 import type { BriefBlocker, CloseGuaranteeProps } from './CloseGuarantee.types';
+import { Gauge } from './Gauge';
 
-const SEVERITY_VARIANT: Record<BriefBlocker['severity'], 'danger' | 'warn' | 'ok'> = {
-  high: 'danger',
-  medium: 'warn',
-  low: 'ok',
+// ── Brand tokens ─────────────────────────────────────────────────────────────
+const PURPLE = '#8E31B5';
+const BLUE   = '#5793EC';
+
+// ── Static data ───────────────────────────────────────────────────────────────
+const BLOCKER_STYLE: Record<BriefBlocker['severity'], { Icon: LucideIcon; iconClass: string; bgClass: string }> = {
+  high:   { Icon: XCircle,     iconClass: 'text-red-500',   bgClass: 'bg-red-50'   },
+  medium: { Icon: AlertCircle, iconClass: 'text-amber-500', bgClass: 'bg-amber-50' },
+  low:    { Icon: AlertCircle, iconClass: 'text-amber-400', bgClass: 'bg-amber-50' },
 };
 
+const STATS = [
+  { label: 'SESSIONS',   value: '7',   sub: 'analyzed' },
+  { label: 'AVG CLOSE',  value: '34m', sub: 'last 3'   },
+  { label: 'MATCH RATE', value: '89%', sub: 'auto'     },
+];
+
+const STEPS = [
+  { n: '01', label: 'Briefing' },
+  { n: '02', label: 'Session'  },
+  { n: '03', label: 'Closing'  },
+  { n: '04', label: 'Narrator' },
+];
+
+// Reusable spring preset — gives a pleasant "pop" without excessive bounce
+const POP = { type: 'spring' as const, stiffness: 260, damping: 20, mass: 0.8 };
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function minuteEstimate(
+  severity: BriefBlocker['severity'],
+  total: number,
+  all: BriefBlocker[],
+): string {
+  const W = { high: 3, medium: 2, low: 1 } as const;
+  const totalW = all.reduce((s, b) => s + W[b.severity], 0);
+  if (totalW === 0) return '';
+  return `~${Math.max(1, Math.round((W[severity] / totalW) * total))} min`;
+}
+
+// Colors vendor names, $ amounts, and time durations inside the insight text.
+function highlightInsight(text: string) {
+  const TOKEN = /(\$[\d,]+(?:\.\d+)?|[A-Z]{3,}(?:\s+[A-Z]{3,})*|±?\d+(?:\.\d+)?\s+(?:days?|minutes?|months?|weeks?))/g;
+  const parts = text.split(TOKEN);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (!part) return null;
+        if (/^\$/.test(part))       return <span key={i} style={{ color: BLUE }}   className="font-semibold">{part}</span>;
+        if (/^[A-Z]{3}/.test(part)) return <span key={i} style={{ color: PURPLE }} className="font-semibold">{part}</span>;
+        if (/^[0-9±]/.test(part))   return <span key={i} className="font-semibold text-gray-800">{part}</span>;
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export function CloseGuarantee({ sessionId }: CloseGuaranteeProps) {
   const openSession = useSessionStore((s) => s.openSession);
   const { data, loading, error } = useCloseGuarantee(sessionId);
 
-  // Fall back to mock on error so the demo never shows an empty screen
+  // Silently fall back to mock on error — demo must never show a broken state.
   const brief = data ?? (error !== null ? briefMock : null);
 
-  const [gaugePct, setGaugePct] = useState(0);
-  const [displayedText, setDisplayedText] = useState('');
-  const [typing, setTyping] = useState(false);
+  const [displayedText, setDisplayedText]     = useState('');
+  const [typing, setTyping]                   = useState(false);
+  const [cursorActive, setCursorActive]       = useState(false); // persists after typing ends
+  const [blockersVisible, setBlockersVisible] = useState(false);
 
-  // Animate gauge + start typewriter once brief arrives
+  // All timer/rAF handles — initialised to 0 so cleanup is always safe.
+  const typewriterRafRef   = useRef(0);
+  const typewriterTimerRef = useRef(0);
+  const fallbackTimerRef   = useRef(0);
+
   useEffect(() => {
     if (!brief) return;
 
-    const target = Math.round(brief.closeProbability * 100);
-
-    // Framer Motion imperative animate: number from 0 to target over 1.5 s
-    const gaugeAnimation = animate(0, target, {
-      duration: 1.5,
-      ease: 'easeOut',
-      onUpdate: (v) => setGaugePct(Math.round(v)),
-    });
-
-    // Typewriter: one character every 30 ms via setInterval
-    let i = 0;
+    // Reset from any previous run so state is clean if brief changes.
     setDisplayedText('');
-    setTyping(true);
-    const timerId = setInterval(() => {
-      i += 1;
-      setDisplayedText(brief.brainInsight.slice(0, i));
-      if (i >= brief.brainInsight.length) {
-        clearInterval(timerId);
-        setTyping(false);
-      }
-    }, 30);
+    setTyping(false);
+    setCursorActive(false);
+    setBlockersVisible(false);
+
+    // Typewriter — rAF, 1 600 ms delay, 18 ms/char.
+    typewriterTimerRef.current = window.setTimeout(() => {
+      const text = brief.brainInsight;
+      let i = 0;
+      let lastTime = performance.now();
+
+      setDisplayedText('');
+      setTyping(true);
+      setCursorActive(true); // cursor stays on after typing finishes
+
+      const tick = (now: number) => {
+        const elapsed = now - lastTime;
+        const chars   = Math.floor(elapsed / 18);
+        if (chars > 0) {
+          i = Math.min(i + chars, text.length);
+          setDisplayedText(text.slice(0, i));
+          lastTime = now - (elapsed % 18);
+          if (i >= text.length) {
+            setTyping(false);
+            setBlockersVisible(true);
+            return;
+          }
+        }
+        typewriterRafRef.current = requestAnimationFrame(tick);
+      };
+      typewriterRafRef.current = requestAnimationFrame(tick);
+
+      // 3. 4 s failsafe — show blockers even if brainInsight is very long.
+      fallbackTimerRef.current = window.setTimeout(() => setBlockersVisible(true), 4000);
+    }, 1600);
 
     return () => {
-      gaugeAnimation.stop();
-      clearInterval(timerId);
+      cancelAnimationFrame(typewriterRafRef.current);
+      clearTimeout(typewriterTimerRef.current);
+      clearTimeout(fallbackTimerRef.current);
     };
   }, [brief]);
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex h-screen w-screen items-center justify-center bg-[#EDF2FA]">
         <Spinner />
       </div>
     );
@@ -68,71 +141,205 @@ export function CloseGuarantee({ sessionId }: CloseGuaranteeProps) {
   if (!brief) return null;
 
   return (
-    <div className="flex w-full max-w-sm flex-col items-center gap-6 px-4 py-8">
-      {/* Gauge — top semicircle, fills left→top→right */}
-      <div className="relative" style={{ width: 280, height: 160 }}>
-        <RadialBarChart
-          width={280}
-          height={160}
-          cx={140}
-          cy={148}
-          innerRadius={96}
-          outerRadius={128}
-          startAngle={180}
-          endAngle={0}
-          data={[{ value: gaugePct }]}
-          barCategoryGap={0}
-        >
-          {/* Domain [0,100] ensures 72 fills 72% of the arc, not 100% */}
-          <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-          <RadialBar
-            dataKey="value"
-            background={{ fill: '#1e293b' }}
-            cornerRadius={8}
-            fill="#7F77DD"
-          />
-        </RadialBarChart>
+    <div className="flex min-h-screen w-full flex-col bg-[#EDF2FA]">
 
-        {/* Number + label sit below the semicircle centre */}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center">
-          <span className="text-5xl font-bold tabular-nums text-white">{gaugePct}%</span>
-          <span className="mt-0.5 text-[10px] text-brain-muted">
-            {brief.closeProbabilityLabel}
-          </span>
+      {/* ── 1. Top accent bar — custom easing slide-in ── */}
+      <motion.div
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="h-[3px] origin-left"
+        style={{ background: `linear-gradient(90deg, ${PURPLE}, ${BLUE})` }}
+      />
+
+      {/* ── 2. Main two-column area ── */}
+      <div className="flex flex-1 gap-12 px-16 pb-8 pt-12">
+
+        {/* ─── Left column (55 %) ─── */}
+        <div className="flex min-w-0 flex-col gap-8" style={{ flex: 55 }}>
+
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12, ...POP }}
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1"
+          >
+            <Sparkles size={11} className="text-purple-500" />
+            <span className="text-[11px] font-medium tracking-wide text-purple-600">
+              PRE-SESSION BRIEFING
+            </span>
+          </motion.div>
+
+          {/* Title + subtitle */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, ...POP }}
+          >
+            <h1 className="text-5xl font-bold leading-tight tracking-tight">
+              <span style={{ color: PURPLE }}>fast</span>
+              <span className="text-gray-900">bank</span>
+              <span className="ml-3 font-normal text-gray-700">Memories</span>
+            </h1>
+            <p className="mt-3 text-xs text-gray-400">
+              Learning since Oct 2025 · 7 sessions analyzed · v2.4
+            </p>
+          </motion.div>
+
+          {/* Brain insight card */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.34, ...POP }}
+            className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm"
+          >
+            <p className="min-h-[3.5rem] text-sm leading-relaxed text-gray-700">
+              {typing ? (
+                <>
+                  {displayedText}
+                  <span className="ml-px animate-pulse select-none" style={{ color: PURPLE }}>|</span>
+                </>
+              ) : (
+                <>
+                  {highlightInsight(displayedText)}
+                  {/* Cursor persists after typing to show the AI is live */}
+                  {cursorActive && (
+                    <span className="ml-px animate-pulse select-none" style={{ color: PURPLE }}>|</span>
+                  )}
+                </>
+              )}
+            </p>
+          </motion.div>
+
+          {/* Blocker rows — slide in from the left, 120 ms stagger */}
+          <div className="space-y-2">
+            <AnimatePresence>
+              {blockersVisible &&
+                brief.blockers.map((blocker, i) => {
+                  const { Icon, iconClass, bgClass } = BLOCKER_STYLE[blocker.severity];
+                  return (
+                    <motion.div
+                      key={blocker.description}
+                      initial={{ opacity: 0, x: -16, scale: 0.97 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      transition={{ delay: i * 0.12, ...POP }}
+                      className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+                    >
+                      <div className={`shrink-0 rounded-full p-1.5 ${bgClass}`}>
+                        <Icon size={14} className={iconClass} />
+                      </div>
+                      <p className="flex-1 text-sm text-gray-700">{blocker.description}</p>
+                      <span className="shrink-0 text-xs text-gray-400">
+                        {minuteEstimate(blocker.severity, brief.estimatedResolutionMinutes, brief.blockers)}
+                      </span>
+                    </motion.div>
+                  );
+                })
+              }
+            </AnimatePresence>
+          </div>
+
+          {/* CTA — scales + fades in last */}
+          {blockersVisible && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.88, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: brief.blockers.length * 0.12 + 0.18, ...POP }}
+              whileHover={{
+                scale: 1.04,
+                boxShadow: `0 10px 28px rgba(142,49,181,0.4)`,
+                transition: { duration: 0.18 },
+              }}
+              whileTap={{ scale: 0.96 }}
+              onClick={openSession}
+              className="inline-flex w-fit items-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white"
+              style={{ backgroundColor: PURPLE }}
+            >
+              Start Session
+              <ArrowRight size={16} />
+            </motion.button>
+          )}
+        </div>
+
+        {/* ─── Right column (45 %) — gauge centred vertically ─── */}
+        <div
+          className="flex flex-col items-center justify-center gap-6"
+          style={{ flex: 45 }}
+        >
+
+          {/* Gauge — springs in from slightly below-scale */}
+          <motion.div
+            initial={{ scale: 0.78, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.28, type: 'spring', stiffness: 90, damping: 13 }}
+          >
+            <Gauge value={Math.round(brief.closeProbability * 100)} size={300} />
+          </motion.div>
+
+          {/* Stats cards — staggered spring pop */}
+          <div className="grid grid-cols-3 gap-3" style={{ width: 300 }}>
+            {STATS.map(({ label, value, sub }, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.85 + i * 0.14, ...POP }}
+                className="flex flex-col items-center rounded-xl border border-slate-100 bg-white py-3 shadow-sm"
+              >
+                <span className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{label}</span>
+                <span className="mt-0.5 text-2xl font-bold text-gray-800">{value}</span>
+                <span className="text-[9px] text-gray-400">{sub}</span>
+              </motion.div>
+            ))}
+          </div>
+
         </div>
       </div>
 
-      {/* Typewriter brief */}
-      <p className="min-h-[2.5rem] text-center text-sm italic text-brain-muted">
-        {displayedText}
-        {typing && <span className="animate-pulse">|</span>}
-      </p>
-
-      {/* Blocker list */}
-      <div className="w-full space-y-2">
-        {brief.blockers.map((blocker, i) => (
+      {/* ── Liquid glass step indicator ── */}
+      <div className="flex justify-center pb-10 pt-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.45, ...POP }}
+          className="relative flex items-center rounded-full px-2 py-1.5"
+          style={{
+            background: 'linear-gradient(160deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.42) 100%)',
+            backdropFilter: 'blur(22px) saturate(190%) brightness(108%)',
+            WebkitBackdropFilter: 'blur(22px) saturate(190%) brightness(108%)',
+            border: '1px solid rgba(255,255,255,0.88)',
+            boxShadow: [
+              '0 8px 32px rgba(0,0,0,0.07)',
+              '0 2px 8px rgba(142,49,181,0.07)',
+              'inset 0 1.5px 0 rgba(255,255,255,0.95)',
+              'inset 0 -1px 0 rgba(0,0,0,0.04)',
+            ].join(', '),
+          }}
+        >
+          {/* Top-edge highlight — simulates the glass light refraction */}
           <div
-            key={i}
-            className="flex items-start gap-3 rounded-md border border-slate-800 bg-brain-surface p-3"
-          >
-            <Badge label={blocker.severity} variant={SEVERITY_VARIANT[blocker.severity]} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-slate-300">{blocker.description}</p>
-              {blocker.vendor !== null && (
-                <p className="mt-0.5 text-xs text-brain-muted">{blocker.vendor}</p>
-              )}
-            </div>
-          </div>
-        ))}
+            className="pointer-events-none absolute inset-x-4 top-0 h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)' }}
+          />
+
+          {STEPS.map(({ n, label }, idx) => (
+            <span
+              key={n}
+              className={`rounded-full px-4 py-1.5 text-xs font-medium ${
+                idx === 0 ? 'text-white' : 'text-gray-500'
+              }`}
+              style={idx === 0 ? {
+                background: `linear-gradient(135deg, ${PURPLE} 0%, ${BLUE} 100%)`,
+                boxShadow: `0 2px 14px rgba(142,49,181,0.38), inset 0 1px 0 rgba(255,255,255,0.25)`,
+              } : undefined}
+            >
+              {n} · {label}
+            </span>
+          ))}
+        </motion.div>
       </div>
 
-      {/* CTA */}
-      <button
-        onClick={openSession}
-        className="mt-2 w-full rounded-lg bg-brain-accent px-6 py-3 text-sm font-semibold text-brain-bg transition-opacity hover:opacity-80 active:opacity-70"
-      >
-        Start Session →
-      </button>
     </div>
   );
 }

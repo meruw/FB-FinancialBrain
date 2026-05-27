@@ -51,11 +51,7 @@ function App() {
 
 
   if (status === 'briefing') {
-    return (
-      <div className="flex min-h-screen w-screen items-start justify-center overflow-y-auto bg-brain-bg py-12">
-        <CloseGuarantee sessionId={sessionId} />
-      </div>
-    );
+    return <CloseGuarantee sessionId={sessionId} />;
   }
 
   return (

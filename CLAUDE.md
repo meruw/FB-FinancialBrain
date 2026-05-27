@@ -4,7 +4,7 @@
 > contract for FastBank Recon Intelligence. It is read by both humans and any
 > AI coding assistant (Claude Code, Cursor, Copilot). When in doubt, follow this
 > document over your instincts.
-
+> Also read DESIGN.md before writing any component or styling code.
 ---
 
 ## 1. What we are building
