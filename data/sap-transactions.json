@@ -4,5 +4,7 @@
   { "id": "SAP-003", "postingDate": "2026-04-25", "amount": 125000.00, "memo": "NOMINA ABRIL 2026 DISPERSION", "docNumber": "5100089201", "type": "outgoing_payment" },
   { "id": "SAP-004", "postingDate": "2026-04-05", "amount": 55000.00, "memo": "WIRE COMPRA USD BBVA 04052026", "docNumber": "5100088601", "type": "outgoing_payment" },
   { "id": "SAP-005", "postingDate": "2026-05-02", "amount": 15420.00, "memo": "CONSTRUTECH PAGO ESTIMACION 7", "docNumber": "5100089744", "type": "outgoing_payment" },
-  { "id": "SAP-006", "postingDate": "2026-04-15", "amount": 8750.00, "memo": "BRAUTOTEST MANTENIMIENTO FLOTA", "docNumber": "5100088890", "type": "outgoing_payment" }
+  { "id": "SAP-006", "postingDate": "2026-04-15", "amount": 8750.00, "memo": "BRAUTOTEST MANTENIMIENTO FLOTA", "docNumber": "5100088890", "type": "outgoing_payment" },
+  { "id": "SAP-007", "postingDate": "2026-04-12", "amount": 18650.00, "memo": "CONSTRUTECH ESTIMACION 5 CV-108", "docNumber": "5100088754", "type": "outgoing_payment" },
+  { "id": "SAP-008", "postingDate": "2026-04-19", "amount": 12300.00, "memo": "CONSTRUTECH PAGO PARCIAL CV-110", "docNumber": "5100088834", "type": "outgoing_payment" }
 ]

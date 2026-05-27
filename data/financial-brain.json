@@ -7,7 +7,7 @@
       "vendor": "CONSTRUTECH",
       "avgPostingDelay": 4.2,
       "commonIssue": "date_tolerance_miss",
-      "occurrencesLast6Months": 4,
+      "occurrencesLast6Months": 6,
       "recommendedTolerance": 5,
       "matchSuccessRate": 0.73
     },
@@ -41,7 +41,7 @@
     }
   },
   "closeProbability": {
-    "current": 0.72,
+    "current": 0.65,
     "blockers": [
       "3 CONSTRUTECH date tolerance misses",
       "1 BRAUTOTEST SAP entry conflict",
