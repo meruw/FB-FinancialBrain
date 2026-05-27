@@ -57,6 +57,7 @@ narratorRouter.post('/', async (req, res) => {
       model: env.CLAUDE_MODEL_NARRATOR,
       temperature: 0.4,
       maxTokens: 2048,
+      timeoutMs: 15000,
     });
 
     const validated: Narrative = narratorSchema.parse(extractJson(text));

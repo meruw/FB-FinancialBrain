@@ -19,6 +19,11 @@ export interface ClaudeCallOptions {
   maxTokens?: number;
   /** 0 = deterministic. Use 0 for debugger/advisor. Bump to 0.4 for Narrator prose. */
   temperature?: number;
+  /**
+   * Request timeout in milliseconds. Falls back to mock if exceeded.
+   * Targets: brief/debug/risk = 8000, narrator = 15000.
+   */
+  timeoutMs?: number;
 }
 
 /**
@@ -33,13 +38,16 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<string> {
   const start = Date.now();
 
   try {
-    const response = await client.messages.create({
-      model,
-      max_tokens: opts.maxTokens ?? 1024,
-      temperature: opts.temperature ?? 0,
-      system: opts.system,
-      messages: [{ role: 'user', content: opts.user }],
-    });
+    const response = await client.messages.create(
+      {
+        model,
+        max_tokens: opts.maxTokens ?? 1024,
+        temperature: opts.temperature ?? 0,
+        system: opts.system,
+        messages: [{ role: 'user', content: opts.user }],
+      },
+      { timeout: opts.timeoutMs ?? 8000 },
+    );
 
     const firstBlock = response.content[0];
     if (!firstBlock || firstBlock.type !== 'text') {
