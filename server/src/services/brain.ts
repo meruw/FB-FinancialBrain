@@ -99,3 +99,28 @@ export function findVendorProfile(
     ) ?? null
   );
 }
+
+/**
+ * Builds a minimal Brain context for the brief endpoint.
+ * Sends only the vendor profiles relevant to the current session's unmatched
+ * cases + the account pattern for the session account. Omits closeProbability
+ * (computed in code) and unrelated vendor/account data.
+ * Keeps prompt tokens low → Haiku responds in ~1-2s instead of 6-10s.
+ */
+export function buildBriefContext(
+  brain: FinancialBrain,
+  account: string,
+  relevantVendors: VendorProfile[],
+): string {
+  return JSON.stringify(
+    {
+      customerId: brain.customerId,
+      sessionsAnalyzed: brain.sessionsAnalyzed,
+      account,
+      accountPattern: brain.accountPatterns[account] ?? null,
+      relevantVendorProfiles: relevantVendors,
+    },
+    null,
+    2,
+  );
+}
