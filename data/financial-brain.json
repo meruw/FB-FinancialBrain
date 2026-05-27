@@ -9,7 +9,8 @@
       "commonIssue": "date_tolerance_miss",
       "occurrencesLast6Months": 6,
       "recommendedTolerance": 5,
-      "matchSuccessRate": 0.73
+      "matchSuccessRate": 0.73,
+      "notes": "Consistent late poster. Has triggered date_tolerance_miss in Oct, Nov, Dec, Feb, Mar, and Apr. Dec 2025 was worst month — 4 misses. A 5-day tolerance window resolves every historical case."
     },
     {
       "vendor": "BRAUTOTEST",
@@ -17,7 +18,8 @@
       "commonIssue": "sap_already_matched",
       "occurrencesLast6Months": 5,
       "recommendedTolerance": 3,
-      "matchSuccessRate": 0.61
+      "matchSuccessRate": 0.61,
+      "notes": "SAP document locking is the core issue — BRAUTOTEST payments sometimes get pre-matched in session setup before the accountant can confirm them. Recommend a pre-session audit of recently matched BRAUTOTEST documents."
     },
     {
       "vendor": "ACME_LOGISTICS",
@@ -25,7 +27,35 @@
       "commonIssue": "amount_mismatch",
       "occurrencesLast6Months": 2,
       "recommendedTolerance": 3,
-      "matchSuccessRate": 0.88
+      "matchSuccessRate": 0.88,
+      "notes": "Infrequent issues. Amount mismatches typically trace to freight surcharges added after the PO is issued. Usually resolved with a memo adjustment in SAP."
+    },
+    {
+      "vendor": "SERVICIOS TECH",
+      "avgPostingDelay": 0.8,
+      "commonIssue": "date_tolerance_miss",
+      "occurrencesLast6Months": 0,
+      "recommendedTolerance": 2,
+      "matchSuccessRate": 0.99,
+      "notes": "SaaS subscription vendor. Posts same-day or next-day consistently. Zero issues in 7 sessions. Reference vendor for what a clean match profile looks like."
+    },
+    {
+      "vendor": "GRUPO INMOBILIARIO",
+      "avgPostingDelay": 3.1,
+      "commonIssue": "date_tolerance_miss",
+      "occurrencesLast6Months": 3,
+      "recommendedTolerance": 4,
+      "matchSuccessRate": 0.79,
+      "notes": "Quarterly rent payments. Issues concentrated in Q1 and Q3 when posting staff is transitioning. A 4-day tolerance resolves all historical misses."
+    },
+    {
+      "vendor": "AGENCIA ADUANAL",
+      "avgPostingDelay": 1.9,
+      "commonIssue": "amount_mismatch",
+      "occurrencesLast6Months": 4,
+      "recommendedTolerance": 2,
+      "matchSuccessRate": 0.65,
+      "notes": "Customs brokerage. Amounts vary due to duty adjustments applied after the initial invoice. Recommend a 2% amount tolerance window for this vendor — Brain has confirmed the pattern across 4 sessions."
     }
   ],
   "accountPatterns": {
@@ -41,13 +71,13 @@
     }
   },
   "closeProbability": {
-    "current": 0.65,
+    "current": 0.62,
     "blockers": [
       "3 CONSTRUTECH date tolerance misses",
       "1 BRAUTOTEST SAP entry conflict",
       "2 unclassified bank fees",
-      "1 duplicate payment risk"
+      "2 suspected duplicate payments pending treasury review"
     ],
-    "formula": "Historical close rate of past sessions with this exception profile in the last 6 months. The AI analyzes the pattern; it does not invent the number."
+    "formula": "historicalCloseRate × (matchRate + (1 − matchRate) × avgResolvability). historicalCloseRate = 0.89 (Main Checking, 7 sessions). matchRate = 4/12 = 0.33. avgResolvability = weighted average of RESOLVABILITY scores per open case type. Result: 0.62. Computed in server/src/utils/closeProbability.ts — the AI does not generate this number."
   }
 }

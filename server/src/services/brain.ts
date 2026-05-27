@@ -124,3 +124,28 @@ export function buildBriefContext(
     2,
   );
 }
+
+/**
+ * Targeted Brain context for the narrator endpoint.
+ * Like buildBriefContext but includes learningSince for the "N sessions" story
+ * and limits vendorProfiles to those appearing in the current session.
+ * Keeps input tokens low so Sonnet responds within the 15s timeout.
+ */
+export function buildNarratorContext(
+  brain: FinancialBrain,
+  account: string,
+  relevantVendors: VendorProfile[],
+): string {
+  return JSON.stringify(
+    {
+      customerId: brain.customerId,
+      learningSince: brain.learningSince,
+      sessionsAnalyzed: brain.sessionsAnalyzed,
+      account,
+      accountPattern: brain.accountPatterns[account] ?? null,
+      relevantVendorProfiles: relevantVendors,
+    },
+    null,
+    2,
+  );
+}

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
-import { brainAsPromptContext, loadBrain } from '../services/brain.js';
+import { loadBrain, findVendorProfile, buildNarratorContext } from '../services/brain.js';
 import { loadBankTransactions, loadMatchedRecords, loadUnmatchedCases, loadSession } from '../services/data.js';
 import { narratorSchema, type Narrative } from '../schemas/narrator.js';
 import { narratorPrompt } from '../prompts/narrator.js';
@@ -27,17 +27,27 @@ narratorRouter.post('/', async (req, res) => {
   }
 
   try {
-    const [unmatched, matched, bank, brain, brainData, session] = await Promise.all([
+    const [unmatched, matched, bank, brainData, session] = await Promise.all([
       loadUnmatchedCases(),
       loadMatchedRecords(),
       loadBankTransactions(),
-      brainAsPromptContext(),
       loadBrain(),
       loadSession(),
     ]);
 
     const accountPattern = brainData.accountPatterns[session.account];
     const historicalCloseRate = accountPattern?.historicalCloseRate ?? 0.75;
+
+    // Targeted context — only vendors appearing in this session's unmatched cases
+    const relevantVendors = unmatched
+      .flatMap((c) => {
+        const bankTxn = bank.find((b) => b.id === c.bankId);
+        return bankTxn ? [findVendorProfile(brainData, bankTxn.description)] : [];
+      })
+      .filter((vp): vp is NonNullable<typeof vp> => vp !== null)
+      .filter((vp, i, arr) => arr.findIndex((v) => v.vendor === vp.vendor) === i);
+
+    const brain = buildNarratorContext(brainData, session.account, relevantVendors);
 
     const closeProbabilityInput = {
       historicalCloseRate,
@@ -69,8 +79,8 @@ narratorRouter.post('/', async (req, res) => {
       system,
       user,
       model: env.CLAUDE_MODEL_NARRATOR,
-      maxTokens: 2048,
-      timeoutMs: 15000,
+      maxTokens: 1200,
+      timeoutMs: 25000,
     });
 
     const partial = narratorSchema

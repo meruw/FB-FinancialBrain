@@ -1,6 +1,6 @@
 // How resolvable each failure type is, based on what the Brain knows.
 // Higher = more likely the accountant can close it without escalation.
-const RESOLVABILITY: Record<string, number> = {
+export const RESOLVABILITY: Record<string, number> = {
   date_tolerance_miss: 0.80, // Known vendor pattern — tolerance tweak resolves it
   sap_already_matched: 0.70, // Admin fix — release the conflicting match
   no_sap_counterpart: 0.50, // May need a manual GL entry
@@ -53,7 +53,7 @@ export interface NextCloseProjection {
 
 // Cases at or above this resolvability are assumed fixed next session when
 // Brain recommendations are followed. Below = requires escalation/treasury.
-const RESOLUTION_THRESHOLD = 0.50;
+export const RESOLUTION_THRESHOLD = 0.50;
 
 /**
  * Projects next session's close probability assuming all advisor recommendations

@@ -314,10 +314,12 @@ after data is loaded.
   }
   ```
 - **DEMO_MODE check before any async work.** In a route, check `env.DEMO_MODE` immediately after validating the body — before loading data or calling `brainAsPromptContext()`. Keeps demo fast.
-- **Always pass `timeoutMs` to `callClaude()`.** The SDK default is 10 minutes — too long for a demo. Targets: brief/debug/risk = 8000ms (default), advisor = 12000ms, narrator = 15000ms. On timeout the route catch falls back to mock automatically.
+- **Always pass `timeoutMs` to `callClaude()`.** The SDK default is 10 minutes — too long for a demo. Targets: brief/debug/risk/simulate = 8000ms (default), advisor = 12000ms, narrator = 25000ms. Narrator intentionally runs long — the 20s wait is a demo "suspense moment" covered by the Brain thinking animation. On timeout the route catch falls back to mock automatically.
 - **SDK retries are disabled** (`maxRetries: 0` on the Anthropic client). Routes already fall back to mocks on failure — retries would just delay the fallback by 3× the timeout. Do not re-enable.
 - **Use `resolveTransaction()` for routes that need bankTxn + unmatchedCase.** It handles both 404s in one call. Import from `utils/transaction.ts`. Risk is the exception — it accepts matched transactions too, so it does its own lookup.
 - **Use `findVendorProfile()` from `services/brain.ts`** instead of inlining `.find()` on `vendorProfiles`. It's tested and handles case-insensitive matching.
+- **Use targeted Brain context helpers** instead of `brainAsPromptContext()` for features that don't need the full Brain. `buildBriefContext()` for brief (vendors relevant to session only). `buildNarratorContext()` for narrator (same, plus `learningSince`). Full Brain JSON is only for features that genuinely need complete vendor universe context.
+- **Numeric projections belong in code, not Claude.** `computeCloseProbability()` and `computeNextCloseProjection()` in `utils/closeProbability.ts` own all probability math. Claude receives the pre-computed numbers and writes labels/narratives around them. Never ask Claude to compute or adjust a probability.
 
 ## 10. Team roles — read this first if you're an AI assistant
 
@@ -370,6 +372,12 @@ Session 2 additions: `/api/advisor` (Resolution Advisor), `buildSystemPrompt()`
 shared prompt builder, `findVendorProfile()`, `resolveTransaction()`, per-call
 timeouts, SDK retries disabled, data enriched to 12 bank txns / 8 unmatched cases.
 
+Session 3 additions: `/api/simulate` (What-If Simulator), `computeCloseProbability()`
+and `computeNextCloseProjection()` utilities, close probability now computed from Brain
+data (not Claude), narrator projection fields injected from code, brief switched to Haiku
+with targeted Brain context, RESOLVABILITY and RESOLUTION_THRESHOLD exported from
+`utils/closeProbability.ts`.
+
 **All live endpoints:**
 
 | Method | Path | What it does |
@@ -388,6 +396,7 @@ timeouts, SDK retries disabled, data enriched to 12 bank txns / 8 unmatched case
 | POST | `/api/risk` | AI risk assessment for one transaction |
 | POST | `/api/narrate` | AI end-of-session narrative |
 | POST | `/api/advisor` | AI resolution advisor — actionType + steps[] for one transaction |
+| POST | `/api/simulate` | What-If Simulator — projects close probability for a given scenario |
 
 **Your job (ongoing):**
 - Fix bugs in existing routes / prompts / schemas
@@ -456,9 +465,9 @@ happen.
   If a call regularly exceeds these, switch that endpoint to Haiku.
 - **A demo that depends on venue WiFi.** Set `DEMO_MODE=true` if the
   network is bad. The talk should be identical.
-- **A "Close Probability: 72%" with no defense.** When asked how it's
-  computed, point at `closeProbability.formula` in `financial-brain.json`.
-  It's documented for a reason.
+- **A "Close Probability: 62%" with no defense.** When asked how it's
+  computed, point at `closeProbability.formula` in `financial-brain.json`
+  and `server/src/utils/closeProbability.ts`. The formula is in code, not AI.
 
 ## 14. Animation library rules (enforced)
 
@@ -629,12 +638,13 @@ The last thing visible on screen when the demo ends must be:
 
 Followed immediately by:
 
-> Next close projection: 84% (+12% from today's 72%)
+> Next close projection: 76% (+14% from today's 62%)
 > Sessions until projected 95%+ close rate: **3**
 
 **"3 sessions until 95%+ close rate"** is the payoff of the entire
 presentation. It is not a generic promise. It is a projection based on
-this company's specific history. That specificity is what makes it land.
+this company's specific history — computed by `computeNextCloseProjection()`
+in `server/src/utils/closeProbability.ts`. That specificity is what makes it land.
 
 Before building the Narrator UI, verify that the `/api/narrate` response
 schema (`server/src/schemas/narrator.ts`) includes fields to support this:
@@ -666,21 +676,24 @@ When presenting, always use the name TRACE. When coding, the folder and
 hook are named `match-debugger` — that is fine. The naming distinction
 is only for demo narration.
 
-## 22. The 10-second defense of the 72% close probability
+## 22. The 10-second defense of the 62% close probability
 
 When a judge asks *"how do you calculate that number?"*, the answer is
 not *"the AI estimated it."* That answer kills credibility.
 
 The correct answer, verbatim:
 
-> "It's based on your historical data. Sessions with this profile of
-> exceptions — these vendor patterns, this number of unmatched items —
-> closed successfully 72% of the time in your last 6 months. The AI
-> analyzes the pattern. It doesn't invent the number."
+> "It's a deterministic formula, not AI. We take your account's historical
+> close rate — 89% over 7 sessions for this account — and adjust it down
+> based on how hard today's open cases are to resolve. Each exception type
+> has a known resolvability score built from Brain history: a date tolerance
+> miss is 80% fixable, a suspected duplicate is only 10% fixable. Today's
+> mix of 8 open cases brings the probability down to 62%. The AI writes the
+> label. It doesn't touch the number."
 
-This is honest, defensible, and makes the number more impressive because
-it is grounded in real history rather than a black-box guess.
+This is honest, accurate, and more impressive than a black-box answer
+because the judge can see exactly why it's 62% and not higher.
 
-The formula is documented in `closeProbability.formula` inside
-`data/financial-brain.json`. That field exists specifically so this
-question can be answered by pointing at the data, not at the AI.
+The formula lives in `server/src/utils/closeProbability.ts` and is
+documented in `closeProbability.formula` inside `data/financial-brain.json`.
+Point at the file if pressed — the code is readable in 30 seconds.
