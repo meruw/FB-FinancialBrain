@@ -19,10 +19,10 @@ export interface CloseProbabilityInput {
  * Computes close probability from Brain history + current session state.
  *
  * Formula:
- *   base       = historicalCloseRate from Brain's accountPatterns
- *   matchRate  = already-matched / total (what's already clean)
+ *   base          = historicalCloseRate from Brain's accountPatterns
+ *   matchRate     = already-matched / total (what's already clean)
  *   resolvability = weighted average of how fixable the remaining cases are
- *   result     = base × (matchRate + (1 - matchRate) × resolvability)
+ *   result        = base × (matchRate + (1 - matchRate) × resolvability)
  *
  * Claude receives this number and writes the label. It does not generate the number.
  */
@@ -43,4 +43,52 @@ export function computeCloseProbability(input: CloseProbabilityInput): number {
 
   // Round to 2 decimal places and clamp — never show 0% or 100% on a demo screen.
   return Math.min(0.95, Math.max(0.50, Math.round(raw * 100) / 100));
+}
+
+export interface NextCloseProjection {
+  nextCloseProbability: number;
+  nextCloseDelta: number;      // integer percentage points (e.g. 14 means +14%)
+  sessionsToTarget: number;    // sessions to reach 95%+ at this improvement rate
+}
+
+// Cases at or above this resolvability are assumed fixed next session when
+// Brain recommendations are followed. Below = requires escalation/treasury.
+const RESOLUTION_THRESHOLD = 0.50;
+
+/**
+ * Projects next session's close probability assuming all advisor recommendations
+ * with resolvability >= RESOLUTION_THRESHOLD are applied this session.
+ * Used by the Narrator closing panel — all fields injected from code, not Claude.
+ */
+export function computeNextCloseProjection(
+  currentProbability: number,
+  input: CloseProbabilityInput,
+): NextCloseProjection {
+  const { historicalCloseRate, matchedCount, totalBankTxns, unmatchedCases } = input;
+
+  const nextUnmatched = unmatchedCases.filter(
+    (c) => (RESOLVABILITY[c.failureReason] ?? 0.5) < RESOLUTION_THRESHOLD,
+  );
+  const nextMatched = matchedCount + (unmatchedCases.length - nextUnmatched.length);
+
+  const nextCloseProbability = computeCloseProbability({
+    historicalCloseRate,
+    matchedCount: nextMatched,
+    totalBankTxns,
+    unmatchedCases: nextUnmatched,
+  });
+
+  const nextCloseDelta = Math.round((nextCloseProbability - currentProbability) * 100);
+
+  const sessionsToTarget =
+    currentProbability >= 0.95
+      ? 0
+      : nextCloseProbability <= currentProbability
+      ? 99
+      : Math.ceil(
+          Math.log(0.95 / currentProbability) /
+          Math.log(nextCloseProbability / currentProbability),
+        );
+
+  return { nextCloseProbability, nextCloseDelta, sessionsToTarget };
 }

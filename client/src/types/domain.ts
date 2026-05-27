@@ -164,6 +164,9 @@ export interface Narrative {
     closeProbability: number;
     resolvedBlockers: number;
   };
+  nextCloseProbability: number;
+  nextCloseDelta: number;
+  sessionsToTarget: number;
 }
 
 export type AdvisorActionType =

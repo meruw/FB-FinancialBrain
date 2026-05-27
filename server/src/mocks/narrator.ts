@@ -40,8 +40,11 @@ export const narratorMock: Narrative = {
   ],
   stats: {
     matched: 4,
-    unmatched: 6,
-    closeProbability: 0.72,
+    unmatched: 8,
+    closeProbability: 0.62,
     resolvedBlockers: 0,
   },
+  nextCloseProbability: 0.76,
+  nextCloseDelta: 14,
+  sessionsToTarget: 3,
 };

@@ -16,6 +16,10 @@ export const narratorSchema = z.object({
     closeProbability: z.number().min(0).max(1),
     resolvedBlockers: z.number().int(),
   }),
+  // All three injected from code — Claude does not generate these.
+  nextCloseProbability: z.number().min(0).max(1),
+  nextCloseDelta: z.number().int(),
+  sessionsToTarget: z.number().int().nonnegative(),
 });
 
 export type Narrative = z.infer<typeof narratorSchema>;

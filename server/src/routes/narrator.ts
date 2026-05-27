@@ -2,11 +2,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
 import { brainAsPromptContext, loadBrain } from '../services/brain.js';
-import { loadBankTransactions, loadMatchedRecords, loadUnmatchedCases } from '../services/data.js';
+import { loadBankTransactions, loadMatchedRecords, loadUnmatchedCases, loadSession } from '../services/data.js';
 import { narratorSchema, type Narrative } from '../schemas/narrator.js';
 import { narratorPrompt } from '../prompts/narrator.js';
 import { narratorMock } from '../mocks/narrator.js';
 import { parseBody } from '../utils/validate.js';
+import { computeCloseProbability, computeNextCloseProjection } from '../utils/closeProbability.js';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
 
@@ -26,13 +27,26 @@ narratorRouter.post('/', async (req, res) => {
   }
 
   try {
-    const [unmatched, matched, bank, brain, brainData] = await Promise.all([
+    const [unmatched, matched, bank, brain, brainData, session] = await Promise.all([
       loadUnmatchedCases(),
       loadMatchedRecords(),
       loadBankTransactions(),
       brainAsPromptContext(),
       loadBrain(),
+      loadSession(),
     ]);
+
+    const accountPattern = brainData.accountPatterns[session.account];
+    const historicalCloseRate = accountPattern?.historicalCloseRate ?? 0.75;
+
+    const closeProbabilityInput = {
+      historicalCloseRate,
+      matchedCount: matched.length,
+      totalBankTxns: bank.length,
+      unmatchedCases: unmatched,
+    };
+    const closeProbability = computeCloseProbability(closeProbabilityInput);
+    const projection = computeNextCloseProjection(closeProbability, closeProbabilityInput);
 
     const { system, user } = narratorPrompt({
       brain,
@@ -41,7 +55,7 @@ narratorRouter.post('/', async (req, res) => {
         matched: matched.length,
         unmatched: unmatched.length,
         totalBankTxns: bank.length,
-        closeProbability: brainData.closeProbability.current,
+        closeProbability,
         resolvedBlockers: body.resolvedBlockers,
       },
       unmatchedSummary: unmatched.map((c) => ({
@@ -59,15 +73,19 @@ narratorRouter.post('/', async (req, res) => {
       timeoutMs: 15000,
     });
 
-    const partial = narratorSchema.omit({ stats: true }).parse(extractJson(text));
+    const partial = narratorSchema
+      .omit({ stats: true, nextCloseProbability: true, nextCloseDelta: true, sessionsToTarget: true })
+      .parse(extractJson(text));
+
     const validated: Narrative = {
       ...partial,
       stats: {
         matched: matched.length,
         unmatched: unmatched.length,
-        closeProbability: brainData.closeProbability.current,
+        closeProbability,
         resolvedBlockers: body.resolvedBlockers,
       },
+      ...projection,
     };
 
     return res.json(validated);
