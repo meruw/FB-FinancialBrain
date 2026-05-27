@@ -363,8 +363,8 @@ and update `domain.ts` + the matching Zod schema together.
 
 **Your territory:** everything inside `server/`.
 
-**STATUS (as of Session 2 — 2026-05-27): BACKEND IS COMPLETE.**
-All 5 AI feature routes, the data router, and all supporting services are
+**STATUS (as of Session 3 — 2026-05-27): BACKEND IS COMPLETE.**
+All 6 AI feature routes, the data router, and all supporting services are
 implemented, tested with real Claude calls, and validated end-to-end.
 Do not re-scaffold — extend or fix instead.
 
@@ -375,8 +375,12 @@ timeouts, SDK retries disabled, data enriched to 12 bank txns / 8 unmatched case
 Session 3 additions: `/api/simulate` (What-If Simulator), `computeCloseProbability()`
 and `computeNextCloseProjection()` utilities, close probability now computed from Brain
 data (not Claude), narrator projection fields injected from code, brief switched to Haiku
-with targeted Brain context, RESOLVABILITY and RESOLUTION_THRESHOLD exported from
-`utils/closeProbability.ts`.
+with targeted Brain context, narrator switched to `buildNarratorContext()` (targeted Brain),
+narrator timeout raised to 25s (20s response is intentional — demo suspense moment),
+advisor extended with `confidenceScore` + `provenance` block (all computed from Brain,
+not Claude), Brain enriched to 6 vendor profiles with notes, historical-patterns enriched
+with per-month notes and lastOccurrence/matchCount per vendor, session JSON enriched
+with periodStart/periodEnd/accountNumber/currency/sapBalance.
 
 **All live endpoints:**
 

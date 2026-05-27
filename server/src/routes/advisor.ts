@@ -1,9 +1,15 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
-import { loadBrain, findVendorProfile } from '../services/brain.js';
-import { loadBankTransactions, loadSapTransactions, loadUnmatchedCases } from '../services/data.js';
-import { advisorSchema, type AdvisorOutput } from '../schemas/advisor.js';
+import { loadBrain, findVendorProfile, type VendorProfile } from '../services/brain.js';
+import {
+  loadBankTransactions,
+  loadSapTransactions,
+  loadUnmatchedCases,
+  loadHistoricalPatterns,
+  type HistoricalPatterns,
+} from '../services/data.js';
+import { advisorSchema, type AdvisorOutput, type AdvisorProvenance } from '../schemas/advisor.js';
 import { advisorPrompt } from '../prompts/advisor.js';
 import { advisorMock } from '../mocks/advisor.js';
 import { findSapCandidates } from '../utils/matching.js';
@@ -15,6 +21,38 @@ import { logger } from '../utils/logger.js';
 const InputSchema = z.object({
   transactionId: z.string(),
 });
+
+const RISK_TO_CONFIDENCE: Record<string, number> = {
+  low: 0.85,
+  medium: 0.65,
+  high: 0.40,
+  critical: 0.25,
+};
+
+function buildProvenance(
+  vendorProfile: VendorProfile,
+  brain: { sessionsAnalyzed: number },
+  historical: HistoricalPatterns,
+): AdvisorProvenance {
+  const issue = historical.topRecurringIssues.find(
+    (r) => r.vendor?.toUpperCase() === vendorProfile.vendor.toUpperCase(),
+  );
+
+  return {
+    historicalAccuracy: {
+      rate: vendorProfile.matchSuccessRate,
+      matchCount: issue?.matchCount ?? Math.round(vendorProfile.occurrencesLast6Months * 2.5),
+    },
+    patternSource: {
+      hitCount: vendorProfile.occurrencesLast6Months,
+      windowSize: brain.sessionsAnalyzed,
+      windowUnit: 'closes',
+    },
+    lastSimilarAction: issue?.lastOccurrence
+      ? { occurredAt: issue.lastOccurrence, outcome: 'accepted' }
+      : null,
+  };
+}
 
 export const advisorRouter = Router();
 
@@ -29,11 +67,12 @@ advisorRouter.post('/', async (req, res) => {
   }
 
   try {
-    const [bankTxns, unmatchedCases, sapTxns, brainData] = await Promise.all([
+    const [bankTxns, unmatchedCases, sapTxns, brainData, historical] = await Promise.all([
       loadBankTransactions(),
       loadUnmatchedCases(),
       loadSapTransactions(),
       loadBrain(),
+      loadHistoricalPatterns(),
     ]);
 
     const resolved = resolveTransaction(transactionId, bankTxns, unmatchedCases, res);
@@ -69,7 +108,17 @@ advisorRouter.post('/', async (req, res) => {
     });
 
     const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024, timeoutMs: 12000 });
-    const validated: AdvisorOutput = advisorSchema.parse(extractJson(text));
+
+    // Claude generates everything except confidenceScore and provenance — injected from code
+    const claudeOutput = advisorSchema
+      .omit({ confidenceScore: true, provenance: true })
+      .parse(extractJson(text));
+
+    const validated: AdvisorOutput = {
+      ...claudeOutput,
+      confidenceScore: RISK_TO_CONFIDENCE[claudeOutput.risk] ?? 0.65,
+      provenance: vendorProfile ? buildProvenance(vendorProfile, brainData, historical) : null,
+    };
 
     return res.json(validated);
   } catch (err) {
