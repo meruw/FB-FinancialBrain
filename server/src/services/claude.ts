@@ -44,7 +44,7 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<string> {
       {
         model,
         max_tokens: opts.maxTokens ?? 1024,
-        temperature: opts.temperature ?? 0,
+        ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
         system: opts.system,
         messages: [{ role: 'user', content: opts.user }],
       },

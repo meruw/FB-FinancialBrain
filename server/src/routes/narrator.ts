@@ -55,12 +55,20 @@ narratorRouter.post('/', async (req, res) => {
       system,
       user,
       model: env.CLAUDE_MODEL_NARRATOR,
-      temperature: 0.4,
       maxTokens: 2048,
       timeoutMs: 15000,
     });
 
-    const validated: Narrative = narratorSchema.parse(extractJson(text));
+    const partial = narratorSchema.omit({ stats: true }).parse(extractJson(text));
+    const validated: Narrative = {
+      ...partial,
+      stats: {
+        matched: matched.length,
+        unmatched: unmatched.length,
+        closeProbability: brainData.closeProbability.current,
+        resolvedBlockers: body.resolvedBlockers,
+      },
+    };
 
     return res.json(validated);
   } catch (err) {

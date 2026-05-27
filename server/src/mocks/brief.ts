@@ -4,8 +4,8 @@ import type { Brief } from '../schemas/brief.js';
 // Numbers come from financial-brain.json — keep them in sync if that file changes.
 export const briefMock: Brief = {
   sessionId: 'SESSION-APR-2026',
-  closeProbability: 0.72,
-  closeProbabilityLabel: '72% — likely to close with manual intervention',
+  closeProbability: 0.62,
+  closeProbabilityLabel: '62% — session at risk, manual intervention required on multiple blockers',
   blockers: [
     {
       description: '3 CONSTRUTECH date tolerance misses (avg 4.2 day delay)',

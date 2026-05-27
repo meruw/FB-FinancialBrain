@@ -3,7 +3,8 @@ import { buildSystemPrompt } from './_shared.js';
 export interface BriefPromptInput {
   brain: string;     // financial-brain.json serialized by brainAsPromptContext()
   sessionId: string;
-  // Pre-computed values passed in so Claude doesn't have to do arithmetic
+  // All numeric values pre-computed server-side — Claude does not generate numbers.
+  closeProbability: number;  // computed by computeCloseProbability() in utils/closeProbability.ts
   unmatchedCount: number;
   matchedCount: number;
   totalBankTxns: number;
@@ -11,7 +12,7 @@ export interface BriefPromptInput {
 
 const JSON_SHAPE = `{
   "sessionId": string,
-  "closeProbability": number between 0.0 and 1.0,
+  "closeProbability": number (use the pre-computed value provided — do not change it),
   "closeProbabilityLabel": string (e.g. "72% — likely to close with manual intervention"),
   "blockers": [
     {
@@ -34,7 +35,8 @@ const JSON_SHAPE = `{
 
 const RULES = [
   'Use only data provided. Never invent vendors, amounts, or dates.',
-  'closeProbability must reflect the Brain\'s historical close rate adjusted for current blockers. Always between 0.50 and 0.95 — never 0 or 1.',
+  'closeProbability must equal the pre-computed value provided in the session context — do not adjust it.',
+  'closeProbabilityLabel must interpret the number in plain English (e.g. "72% — likely to close with manual intervention").',
   'knownPattern must be true only if the vendor or issue appears in vendorProfiles or monthlyCloseHistory.',
   'brainInsight must reference something specific from the Brain (a vendor, a month, a rate).',
 ];
@@ -53,6 +55,7 @@ ${input.brain}
 Session ID: ${input.sessionId}
 Matched transactions: ${input.matchedCount} of ${input.totalBankTxns}
 Unmatched cases: ${input.unmatchedCount}
+Pre-computed close probability: ${Math.round(input.closeProbability * 100)}% (use this exact value)
 
 Produce the briefing now.
 `.trim();
