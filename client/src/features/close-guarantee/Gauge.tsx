@@ -59,26 +59,35 @@ export function Gauge({ value, size = 320, title = 'CLOSE PROBABILITY' }: GaugeP
   // dispNum is the rAF-driven counter in the center label
   const [dispNum, setDispNum] = useState(0);
 
-  const rafRef = useRef(0);
-  const t0Ref  = useRef(0);
+  const rafRef      = useRef(0);
+  const t0Ref       = useRef(0);
+  // Tracks where the last animation started so live updates count FROM there,
+  // not from zero. Starts at 0 so the initial mount does a full 0→value sweep.
+  const prevRef     = useRef(0);
 
   useEffect(() => {
-    setAnimVal(0);
-    setDispNum(0);
+    const from        = prevRef.current;
+    prevRef.current   = value;
+    const isFirstMount = from === 0 && value !== 0;
+
+    // On first mount: snap arc to empty so the CSS transition fills it in.
+    // On live update: leave animVal where it is — CSS transition moves it forward.
+    if (isFirstMount) setAnimVal(0);
+
+    const delay = isFirstMount ? 240 : 0;
 
     const timer = window.setTimeout(() => {
-      // Trigger the CSS arc transition
       setAnimVal(value);
 
-      // Parallel rAF loop counts the number up with the same easing
+      cancelAnimationFrame(rafRef.current);
       t0Ref.current = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - t0Ref.current) / ANIM_MS, 1);
-        setDispNum(Math.round(cubicEase(p) * value));
+        setDispNum(Math.round(from + cubicEase(p) * (value - from)));
         if (p < 1) rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
-    }, 240);
+    }, delay);
 
     return () => {
       clearTimeout(timer);
@@ -94,7 +103,7 @@ export function Gauge({ value, size = 320, title = 'CLOSE PROBABILITY' }: GaugeP
   const scale       = size / 320;
   const numPx       = Math.round(84 * scale);
   const pctPx       = Math.round(40 * scale);
-  const titlePx     = Math.max(9,  Math.round(12 * scale));
+  const titlePx     = Math.max(7,  Math.round(10 * scale));
   const titleMtPx   = Math.max(4,  Math.round(14 * scale));
 
   return (

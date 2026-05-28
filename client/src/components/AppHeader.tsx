@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Brain, X } from 'lucide-react';
+import { Brain, TrendingUp, X } from 'lucide-react';
 import type { ReconciliationSession } from '@/types/domain';
 
 const PURPLE = '#8E31B5';
@@ -35,20 +35,43 @@ export interface AppHeaderProps {
   unmatchedCount: number;
   isClosed?: boolean;
   onCloseSession?: () => void;
+  // Live probability chip
+  closeProbability?: number | null;
+  initialCloseProbability?: number | null;
+  gaugeOpen?: boolean;
+  onGaugeOpen?: () => void;
+  onGaugeLeave?: () => void;
+  onGaugeToggle?: () => void;
 }
 
-export function AppHeader({ session, unmatchedCount, isClosed, onCloseSession }: AppHeaderProps) {
-  const currency     = session?.currency ?? 'MXN';
-  const bankBalance  = session?.endingBalance;
-  const sapBalance   = session?.sapBalance;
-  const difference   = session?.difference;
-  const account      = session?.account ?? 'Main Checking';
-  const accountNum   = session?.accountNumber;
-  const period       = session?.period ?? '—';
+export function AppHeader({
+  session,
+  unmatchedCount,
+  isClosed,
+  onCloseSession,
+  closeProbability,
+  initialCloseProbability,
+  gaugeOpen = false,
+  onGaugeOpen,
+  onGaugeLeave,
+  onGaugeToggle,
+}: AppHeaderProps) {
+  const currency    = session?.currency ?? 'MXN';
+  const bankBalance = session?.endingBalance;
+  const sapBalance  = session?.sapBalance;
+  const difference  = session?.difference;
+  const account     = session?.account ?? 'Main Checking';
+  const accountNum  = session?.accountNumber;
+  const period      = session?.period ?? '—';
 
   const diffClass = difference !== undefined && difference < 0
     ? 'text-red-500'
     : 'text-emerald-600';
+
+  const showChip = closeProbability !== null && closeProbability !== undefined;
+  const hasDelta = showChip
+    && initialCloseProbability != null
+    && closeProbability! > initialCloseProbability;
 
   return (
     <div className="flex w-full shrink-0 flex-col">
@@ -69,7 +92,7 @@ export function AppHeader({ session, unmatchedCount, isClosed, onCloseSession }:
           <span className="text-base font-bold tracking-tight">
             <span style={{ color: PURPLE }}>fast</span>
             <span className="text-gray-900">bank</span>
-            <span className="ml-1.5 font-normal text-gray-400 text-sm">Memories</span>
+            <span className="ml-1.5 text-sm font-normal text-gray-400">Memories</span>
           </span>
 
           {session && (
@@ -92,19 +115,50 @@ export function AppHeader({ session, unmatchedCount, isClosed, onCloseSession }:
           <div className="flex flex-1 items-center justify-center gap-6">
             <Kpi label="Bank Balance" value={fmtCurrency(bankBalance, currency)} />
             <div className="h-5 w-px bg-slate-200" />
-            <Kpi label="SAP Balance" value={fmtCurrency(sapBalance, currency)} />
+            <Kpi label="SAP Balance"  value={fmtCurrency(sapBalance, currency)} />
             <div className="h-5 w-px bg-slate-200" />
-            <Kpi label="Difference"  value={fmtCurrency(difference, currency)} valueClass={diffClass} />
+            <Kpi label="Difference"   value={fmtCurrency(difference, currency)} valueClass={diffClass} />
           </div>
         )}
 
-        {/* ── Right: pills + close ── */}
+        {/* ── Right: probability chip + pills + close ── */}
         <div className="flex shrink-0 items-center gap-2">
+
           {/* Unresolved count badge */}
           {unmatchedCount > 0 && (
             <span className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-500">
               {unmatchedCount} unresolved
             </span>
+          )}
+
+          {/* Close probability chip — always visible, toggles the gauge panel */}
+          {showChip && (
+            <button
+              onMouseEnter={onGaugeOpen}
+              onMouseLeave={onGaugeLeave}
+              onClick={onGaugeToggle}
+              className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 transition-all ${
+                gaugeOpen
+                  ? 'border-purple-300 bg-purple-50'
+                  : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/40'
+              }`}
+            >
+              <span
+                className="text-sm font-bold tabular-nums leading-none"
+                style={{
+                  background: `linear-gradient(90deg, ${PURPLE}, ${BLUE})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                {Math.round(closeProbability! * 100)}%
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                close
+              </span>
+              {hasDelta && <TrendingUp size={10} style={{ color: PURPLE }} />}
+            </button>
           )}
 
           {/* MEMORIES ACTIVE pill */}
