@@ -6,6 +6,7 @@ import { loadBrain } from './services/brain.js';
 import { warmupCache } from './services/data.js';
 import { callClaude, configureAnthropicKey } from './services/claude.js';
 import { fetchAnthropicApiKey } from './services/keyvault.js';
+import { loadResolveStateFromStorage } from './services/resolveState.js';
 import { dataRouter } from './routes/data.js';
 import { briefRouter } from './routes/brief.js';
 import { debugRouter } from './routes/debug.js';
@@ -80,7 +81,7 @@ async function main() {
       model: env.CLAUDE_MODEL,
     });
 
-    Promise.all([loadBrain(), warmupCache()]).catch((err) =>
+    Promise.all([loadBrain(), warmupCache(), loadResolveStateFromStorage()]).catch((err) =>
       logger.error('startup.warmup.fail', { error: String(err) })
     );
 
