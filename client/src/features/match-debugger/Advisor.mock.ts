@@ -4,7 +4,7 @@ export const advisorMock: AdvisorResolution = {
   transactionId: 'BT-1048',
   action:
     'Release the existing match on <em>BT-1031</em> to free the SAP entry, ' +
-    'then re-run the automatic matcher. BRAUTOTEST has a 94% match-success rate ' +
+    'then re-run the automatic matcher. GROVE FLEET SERVICES has a 94% match-success rate ' +
     'once the conflicting lock is cleared.',
   actionType: 'release_match',
   reasoning:
@@ -17,7 +17,7 @@ export const advisorMock: AdvisorResolution = {
   ],
   risk: 'low',
   confidenceScore: 0.94,
-  brainBasis: 'Based on 5 identical BRAUTOTEST conflicts resolved the same way in the last 6 months.',
+  brainBasis: 'Based on 5 identical GROVE FLEET SERVICES conflicts resolved the same way in the last 6 months.',
   provenance: {
     historicalAccuracy: { rate: 0.94, matchCount: 5 },
     patternSource: { hitCount: 5, windowSize: 6, windowUnit: 'closes' },

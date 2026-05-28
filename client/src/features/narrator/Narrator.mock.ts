@@ -11,7 +11,7 @@ export const narratorMock: Narrative = {
     'remain flagged for follow-up.',
   learnedThisSession: [
     {
-      insight: 'CONSTRUTECH tolerance pattern confirmed (avg 4.1 day delay over 5 months)',
+      insight: 'APEX SYSTEMS INC tolerance pattern confirmed (avg 4.1 day delay over 5 months)',
       category: 'pattern',
     },
     {
@@ -23,11 +23,11 @@ export const narratorMock: Narrative = {
       category: 'risk',
     },
     {
-      insight: 'BRAUTOTEST SAP conflict resolved via prior-session release',
+      insight: 'GROVE FLEET SERVICES SAP conflict resolved via prior-session release',
       category: 'vendor',
     },
     {
-      insight: 'Late-month CONSTRUTECH payments reliably post within 5 days',
+      insight: 'Late-month APEX SYSTEMS INC payments reliably post within 5 days',
       category: 'pattern',
     },
   ],
