@@ -45,7 +45,7 @@ simulateRouter.post('/', async (req, res) => {
     const bankById = new Map(bank.map((b) => [b.id, b]));
 
     const accountPattern = brainData.accountPatterns[session.account];
-    const historicalCloseRate = accountPattern?.historicalCloseRate ?? 0.75;
+    const historicalCloseRate = accountPattern?.historicalCloseRate ?? 0.85;
 
     // Determine which cases get resolved under this scenario
     let resolvedCases: typeof unmatched;

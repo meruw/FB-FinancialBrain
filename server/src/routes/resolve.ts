@@ -4,8 +4,8 @@ import {
   loadUnmatchedCases,
   loadMatchedRecords,
   loadSession,
-  markResolved,
 } from '../services/data.js';
+import { markResolved } from '../services/resolveState.js';
 import { loadBrain } from '../services/brain.js';
 import { resolveInputSchema, type ResolveResult } from '../schemas/resolve.js';
 import { resolveTransaction } from '../utils/transaction.js';
