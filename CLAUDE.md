@@ -356,6 +356,30 @@ and update `domain.ts` + the matching Zod schema together.
 3. `match-debugger` — select a transaction, get diagnosis ← **next**
 4. `risk-firewall` — risk badge on each unmatched row
 5. `narrator` — end-of-session summary modal
+6. `what-if-simulator` — scenario projection panel (POST /api/simulate) ← **NOT YET BUILT**
+
+**Two known UI bugs to fix (Session 5):**
+- Bank Transactions table: TYPE column shows "REF" — should show the `type` field from bank transaction data (`"debit"` or `"credit"`)
+- SAP Entries table: TYPE column shows the SAP document number — the data has no display type field; either hide this column or show "Payment"
+
+**Data changes (Session 5) — pull before building:**
+- All vendor names are now English: APEX SYSTEMS INC, GROVE FLEET SERVICES, ACME LOGISTICS, NEXCORE TECHNOLOGIES, MERIDIAN PROPERTIES GROUP, HARBOR CUSTOMS BROKERS
+- All bank/SAP transaction descriptions are now in English
+- `matched-records.json` now uses real FastBank rule names: `ExactDate`, `FastBank`, `NACHA`, `DateWithRange`
+- `domain.ts` `RuleId` already has these names — display labels in UI are your call
+
+**What-If Simulator — POST /api/simulate:**
+```ts
+// Request body
+{
+  sessionId: string,
+  scenarioType: 'tolerance_change' | 'vendor_fix' | 'threshold_change',
+  vendorName?: string,           // required for tolerance_change and vendor_fix
+  proposedToleranceDays?: number // required for tolerance_change
+}
+// Response: SimulationResult (see client/src/types/domain.ts)
+// projectedCloseProbability, projectedDelta, casesResolved, casesRemaining, financialImpact, narrative, brainBasis
+```
 
 ---
 
@@ -391,6 +415,14 @@ cleanup — `services/resolveState.ts` (resolve state extracted from data.ts),
 `services/pdf.ts` (browser lifecycle extracted from route), MonthlyClose types fixed
 (daysToClose/closedClean now nullable for in-progress sessions), Anthropic TLS
 connection pre-warmed on server startup.
+
+Session 5 additions: All vendor names and transaction descriptions translated to English
+(CONSTRUTECH → APEX SYSTEMS INC, BRAUTOTEST → GROVE FLEET SERVICES, plus 3 others),
+matched-records updated with real FastBank rule names (FastBank/ExactDate/NACHA/DateWithRange),
+debug prompt fixed to enforce authoritative failureReason from matching engine (Claude was
+overriding it with Brain context), PDF layout fixes — Puppeteer footerTemplate anchored to
+page bottom, `@page` margin rules for breathing room on page 2+, no-break on key blocks,
+generatedBy field added to header.
 
 **All live endpoints:**
 
