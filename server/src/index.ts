@@ -13,6 +13,7 @@ import { narratorRouter } from './routes/narrator.js';
 import { advisorRouter } from './routes/advisor.js';
 import { simulateRouter } from './routes/simulate.js';
 import { resolveRouter } from './routes/resolve.js';
+import { exportRouter } from './routes/export.js';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/narrate', narratorRouter);
 app.use('/api/advisor', advisorRouter);
 app.use('/api/simulate', simulateRouter);
 app.use('/api/resolve', resolveRouter);
+app.use('/api/export', exportRouter);
 
 // 404
 app.use((req, res) => {
