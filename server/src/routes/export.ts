@@ -9,6 +9,7 @@ import { logger } from '../utils/logger.js';
 
 const InputSchema = z.object({
   narrator: narratorSchema,
+  generatedBy: z.string().optional(),
 });
 
 export const exportRouter = Router();
@@ -28,7 +29,7 @@ exportRouter.post('/pdf', async (req, res) => {
       minute: '2-digit',
     });
 
-    const html = buildClosingReportHtml(body.narrator, session, generatedAt);
+    const html = buildClosingReportHtml(body.narrator, session, generatedAt, body.generatedBy);
     const pdf = await generatePdf(html);
 
     const period = session.period.replace(/\s+/g, '-').toLowerCase();
