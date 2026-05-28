@@ -14,6 +14,8 @@ import type {
   Narrative,
   AdvisorResolution,
   ResolveResult,
+  SimulationResult,
+  SimulationScenario,
   FinancialBrain,
   ReconciliationSession,
   BankTransaction,
@@ -21,6 +23,13 @@ import type {
   MatchedRecord,
   UnmatchedCase,
 } from '@/types/domain';
+
+interface SimulateRequest {
+  sessionId: string;
+  scenarioType: SimulationScenario;
+  vendorName?: string;
+  proposedToleranceDays?: number;
+}
 
 async function postJson<TBody, TResponse>(
   path: string,
@@ -70,6 +79,9 @@ export const api = {
 
   resolve: (transactionId: string, actionType: string) =>
     postJson<{ transactionId: string; actionType: string }, ResolveResult>('/api/resolve', { transactionId, actionType }),
+
+  simulate: (req: SimulateRequest) =>
+    postJson<SimulateRequest, SimulationResult>('/api/simulate', req),
   
 // Data endpoints
   getBrain: () => getJson<FinancialBrain>('/api/data/brain'),

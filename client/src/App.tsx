@@ -10,6 +10,7 @@ import { TransactionTable } from '@/components/reconciliation/TransactionTable';
 import { MatchDebugger } from '@/features/match-debugger/MatchDebugger';
 import { RiskFirewall } from '@/features/risk-firewall/RiskFirewall';
 import { Narrator } from '@/features/narrator/Narrator';
+import { WhatIfSimulator } from '@/features/what-if-simulator/WhatIfSimulator';
 import { AppHeader } from '@/components/AppHeader';
 import type { BankTransaction, SapTransaction } from '@/types/domain';
 
@@ -256,6 +257,7 @@ function App() {
               selectedId={selectedId}
               matchedIds={sapMatchedIds}
               unmatchedIds={sapUnmatchedIds}
+              showReference={false}
             />
           </div>
         </div>
@@ -265,7 +267,11 @@ function App() {
 
         {/* Right zone — Brain Panel (35 %) */}
         <div className="flex h-full w-[35%] flex-col bg-white">
-          {isClosed ? <Narrator /> : <MatchDebugger />}
+          {isClosed
+            ? <Narrator />
+            : selectedId === null
+              ? <WhatIfSimulator />
+              : <MatchDebugger />}
         </div>
 
       </div>

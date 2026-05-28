@@ -10,6 +10,7 @@ export interface TransactionTableProps {
   selectedId: string | null;
   matchedIds: string[];
   unmatchedIds: string[];
+  showReference?: boolean;
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -37,9 +38,10 @@ const row: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } },
 };
 
-// ── grid column template ──────────────────────────────────────────────────────
-// icon | date | description | reference | type | amount
-const COLS = 'grid-cols-[20px_88px_1fr_132px_90px_128px]';
+// ── grid column templates ─────────────────────────────────────────────────────
+// icon | date | description | [reference |] type | amount
+const COLS_WITH_REF    = 'grid-cols-[20px_88px_1fr_132px_90px_128px]';
+const COLS_WITHOUT_REF = 'grid-cols-[20px_88px_1fr_90px_128px]';
 const CELL = 'flex items-center px-3 py-3';
 
 // ── component ─────────────────────────────────────────────────────────────────
@@ -51,8 +53,10 @@ export function TransactionTable({
   selectedId,
   matchedIds,
   unmatchedIds,
+  showReference = true,
 }: TransactionTableProps) {
   const unmatchedCount = transactions.filter((t) => unmatchedIds.includes(t.id)).length;
+  const COLS = showReference ? COLS_WITH_REF : COLS_WITHOUT_REF;
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -70,7 +74,7 @@ export function TransactionTable({
       {/* ── column headers ── */}
       <div className={`grid ${COLS} border-b border-slate-100 bg-slate-50/70`}>
         <div className="px-3 py-2.5" />
-        {(['Date', 'Description', 'Reference', 'Type'] as const).map((h) => (
+        {(['Date', 'Description', ...(showReference ? ['Reference'] : []), 'Type'] as const).map((h) => (
           <div
             key={h}
             className="px-3 py-2.5 text-[10.5px] font-medium uppercase tracking-wider text-slate-400"
@@ -134,10 +138,12 @@ export function TransactionTable({
                 <span className="truncate">{txn.description}</span>
               </div>
 
-              {/* Reference */}
-              <div className={`${CELL} font-mono text-xs ${mutedSmall}`}>
-                {txn.reference}
-              </div>
+              {/* Reference — hidden for SAP entries */}
+              {showReference && (
+                <div className={`${CELL} font-mono text-xs ${mutedSmall}`}>
+                  {txn.reference}
+                </div>
+              )}
 
               {/* Type badge */}
               <div className={CELL}>
