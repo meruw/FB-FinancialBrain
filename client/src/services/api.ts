@@ -16,6 +16,7 @@ import type {
   ResolveResult,
   SimulationResult,
   SimulationScenario,
+  ClosingReport,
   FinancialBrain,
   ReconciliationSession,
   BankTransaction,
@@ -54,17 +55,21 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function postForBlob<TBody>(path: string, body: TBody): Promise<Blob> {
-  const res = await fetch(path, {
+async function postForBlob<TBody>(
+  path: string,
+  body: TBody,
+): Promise<{ blob: Blob; response: Response }> {
+  const response = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`API ${path} failed: ${res.status} ${text}`);
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`API ${path} failed: ${response.status} ${text}`);
   }
-  return res.blob();
+  const blob = await response.blob();
+  return { blob, response };
 }
 
 export const api = {
@@ -96,8 +101,20 @@ export const api = {
   simulate: (req: SimulateRequest) =>
     postJson<SimulateRequest, SimulationResult>('/api/simulate', req),
 
-  exportPdf: (narrator: Narrative) =>
-    postForBlob<{ narrator: Narrative }>('/api/export/pdf', { narrator }),
+  exportPdf: async (
+    narrator: Narrative,
+  ): Promise<{ blob: Blob; blobUrl: string | null }> => {
+    const { blob, response } = await postForBlob<{ narrator: Narrative }>(
+      '/api/export/pdf',
+      { narrator },
+    );
+    // X-Blob-Url is set only when the server successfully archived the PDF to
+    // Azure Blob Storage. If Azure isn't configured the header is absent and
+    // the download still works — we just won't render the cloud link.
+    return { blob, blobUrl: response.headers.get('X-Blob-Url') };
+  },
+
+  getReports: () => getJson<ClosingReport[]>('/api/export/reports'),
   
 // Data endpoints
   getBrain: () => getJson<FinancialBrain>('/api/data/brain'),

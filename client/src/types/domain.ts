@@ -240,3 +240,12 @@ export interface SimulationResult {
   narrative: string;
   brainBasis: string;
 }
+
+// One row of the archived PDF list returned by GET /api/export/reports.
+// `url` is a time-limited SAS URL — opening it streams the PDF without auth.
+export interface ClosingReport {
+  name: string;
+  url: string;
+  sizeBytes: number;
+  lastModified: string;
+}

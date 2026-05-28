@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
+  Archive,
+  ArrowUpRight,
   BrainCircuit,
   CheckCircle2,
   Clipboard,
+  Cloud,
   Cpu,
   Download,
   FileText,
@@ -14,6 +17,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Typewriter } from '@/components/effects/Typewriter';
 import { NerveCellsAnimation } from '@/components/effects/NerveCellsAnimation';
 import { useNarrator } from './useNarrator';
+import { PastClosingsModal } from './PastClosingsModal';
 import { api } from '@/services/api';
 import type { NarrativeInsight, Narrative } from '@/types/domain';
 
@@ -90,6 +94,10 @@ export function Narrator() {
   const [copied, setCopied]                   = useState(false);
   const [pdfLoading, setPdfLoading]           = useState(false);
   const [pdfError, setPdfError]               = useState<string | null>(null);
+  // SAS URL returned in the X-Blob-Url header after a successful PDF export.
+  // Null when Azure isn't configured or the upload failed silently.
+  const [pdfBlobUrl, setPdfBlobUrl]           = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen]         = useState(false);
   // True for ~700ms after `loading` flips false — lets the nerve animation
   // play its completion snap before the narrative content takes over.
   const [completing, setCompleting]           = useState(false);
@@ -176,13 +184,14 @@ export function Narrator() {
     setPdfLoading(true);
     setPdfError(null);
     try {
-      const blob = await api.exportPdf(data);
+      const { blob, blobUrl } = await api.exportPdf(data);
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href     = url;
       a.download = 'recon-report-may-2026.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setPdfBlobUrl(blobUrl);
     } catch (err) {
       setPdfError(String(err));
     } finally {
@@ -423,6 +432,21 @@ export function Narrator() {
               {pdfError && (
                 <p className="text-[11px] text-red-500">PDF export failed. Try again.</p>
               )}
+              {pdfBlobUrl && !pdfError && (
+                <motion.a
+                  href={pdfBlobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="group inline-flex items-center justify-center gap-1.5 self-center text-[11px] font-medium text-purple-600 transition-colors hover:text-purple-700"
+                >
+                  <Cloud size={11} />
+                  View in Azure
+                  <ArrowUpRight size={11} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </motion.a>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -471,7 +495,26 @@ export function Narrator() {
           )}
         </AnimatePresence>
 
+        {/* Archived closings link */}
+        <AnimatePresence>
+          {actionsVisible && (
+            <motion.button
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18, ...POP }}
+              onClick={() => setArchiveOpen(true)}
+              className="group inline-flex items-center justify-center gap-1.5 self-center text-[11px] font-medium text-gray-400 transition-colors hover:text-purple-600"
+            >
+              <Archive size={11} />
+              View archived closings
+              <ArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
       </div>
+
+      <PastClosingsModal open={archiveOpen} onClose={() => setArchiveOpen(false)} />
     </div>
   );
 }
