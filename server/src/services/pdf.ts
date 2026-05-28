@@ -20,7 +20,7 @@ export async function generatePdf(html: string): Promise<Uint8Array> {
   const b = await getBrowser();
   const page = await b.newPage();
   try {
-    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    await page.setContent(html, { waitUntil: 'load' });
     return await page.pdf({
       format: 'A4',
       printBackground: true,
