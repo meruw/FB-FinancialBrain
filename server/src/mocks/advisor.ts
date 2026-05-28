@@ -5,11 +5,11 @@ export const advisorMock: AdvisorOutput = {
   action: 'Raise date tolerance and re-run match',
   actionType: 'manual_match',
   reasoning:
-    'CONSTRUTECH has a known average posting delay of 4.2 days. The current 3-day tolerance is too narrow for this vendor. SAP-005 is the correct counterpart — amounts match exactly and the memo aligns with the bank description.',
+    'APEX SYSTEMS INC has a known average posting delay of 4.2 days. The current 3-day tolerance is too narrow for this vendor. SAP-005 is the correct counterpart — amounts match exactly and the memo aligns with the bank description.',
   steps: [
     {
       order: 1,
-      instruction: 'Open the matching rule configuration for vendor CONSTRUTECH.',
+      instruction: 'Open the matching rule configuration for vendor APEX SYSTEMS INC.',
     },
     {
       order: 2,
@@ -27,7 +27,7 @@ export const advisorMock: AdvisorOutput = {
   risk: 'low',
   confidenceScore: 0.85,
   brainBasis:
-    'CONSTRUTECH has triggered date_tolerance_miss 6 times in the last 6 months. The Brain recommends a permanent 5-day tolerance for this vendor.',
+    'APEX SYSTEMS INC has triggered date_tolerance_miss 6 times in the last 6 months. The Brain recommends a permanent 5-day tolerance for this vendor.',
   provenance: {
     historicalAccuracy: { rate: 0.73, matchCount: 17 },
     patternSource: { hitCount: 6, windowSize: 7, windowUnit: 'closes' },

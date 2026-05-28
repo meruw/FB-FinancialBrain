@@ -1,14 +1,14 @@
 [
-  { "id": "BNK-001", "date": "2026-04-28", "amount": 15420.00, "description": "CONSTRUTECH SA DE CV PAGO PROVEEDOR", "reference": "REF-7821", "type": "debit" },
-  { "id": "BNK-002", "date": "2026-04-15", "amount": 8750.00, "description": "BRAUTOTEST MX TRANSFERENCIA", "reference": "REF-6634", "type": "debit" },
-  { "id": "BNK-003", "date": "2026-04-10", "amount": 3200.00, "description": "ACME LOGISTICS PAGO FACTURA", "reference": "REF-5501", "type": "debit" },
-  { "id": "BNK-004", "date": "2026-04-30", "amount": 45.00, "description": "COMISION MENSUAL CUENTA", "reference": "REF-9901", "type": "debit" },
-  { "id": "BNK-005", "date": "2026-04-18", "amount": 22100.00, "description": "CONSTRUTECH SA DE CV ANTICIPO", "reference": "REF-8102", "type": "debit" },
-  { "id": "BNK-006", "date": "2026-04-30", "amount": 35.00, "description": "COMISION TRANSFERENCIA SPEI", "reference": "REF-9902", "type": "debit" },
-  { "id": "BNK-007", "date": "2026-04-25", "amount": 125000.00, "description": "DISPERSION NOMINA ABRIL 2026", "reference": "REF-4400", "type": "debit" },
-  { "id": "BNK-008", "date": "2026-04-22", "amount": 9800.00, "description": "CONSTRUTECH SA DE CV COMPLEMENTO", "reference": "REF-8340", "type": "debit" },
-  { "id": "BNK-009", "date": "2026-04-22", "amount": 9800.00, "description": "CONSTRUTECH SA DE CV COMPLEMENTO", "reference": "REF-8341", "type": "debit" },
-  { "id": "BNK-010", "date": "2026-04-05", "amount": 55000.00, "description": "WIRE USD CONVERSION TIPO DE CAMBIO", "reference": "REF-1122", "type": "debit" },
-  { "id": "BNK-011", "date": "2026-04-08", "amount": 18650.00, "description": "CONSTRUTECH SA DE CV ESTIMACION", "reference": "REF-7755", "type": "debit" },
-  { "id": "BNK-012", "date": "2026-04-14", "amount": 12300.00, "description": "CONSTRUTECH SA DE CV PAGO PARCIAL", "reference": "REF-8001", "type": "debit" }
+  { "id": "BNK-001", "date": "2026-04-28", "amount": 15420.00, "description": "APEX SYSTEMS INC VENDOR PAYMENT",      "reference": "REF-7821", "type": "debit" },
+  { "id": "BNK-002", "date": "2026-04-15", "amount": 8750.00,  "description": "GROVE FLEET SERVICES WIRE TRANSFER",   "reference": "REF-6634", "type": "debit" },
+  { "id": "BNK-003", "date": "2026-04-10", "amount": 3200.00,  "description": "ACME LOGISTICS INVOICE PAYMENT",       "reference": "REF-5501", "type": "debit" },
+  { "id": "BNK-004", "date": "2026-04-30", "amount": 45.00,    "description": "MONTHLY ACCOUNT FEE",                  "reference": "REF-9901", "type": "debit" },
+  { "id": "BNK-005", "date": "2026-04-18", "amount": 22100.00, "description": "APEX SYSTEMS INC ADVANCE PAYMENT",     "reference": "REF-8102", "type": "debit" },
+  { "id": "BNK-006", "date": "2026-04-30", "amount": 35.00,    "description": "WIRE TRANSFER FEE",                    "reference": "REF-9902", "type": "debit" },
+  { "id": "BNK-007", "date": "2026-04-25", "amount": 125000.00,"description": "PAYROLL DISBURSEMENT APRIL 2026",      "reference": "REF-4400", "type": "debit" },
+  { "id": "BNK-008", "date": "2026-04-22", "amount": 9800.00,  "description": "APEX SYSTEMS INC PAYMENT SUPPLEMENT",  "reference": "REF-8340", "type": "debit" },
+  { "id": "BNK-009", "date": "2026-04-22", "amount": 9800.00,  "description": "APEX SYSTEMS INC PAYMENT SUPPLEMENT",  "reference": "REF-8341", "type": "debit" },
+  { "id": "BNK-010", "date": "2026-04-05", "amount": 55000.00, "description": "USD WIRE FX CONVERSION",               "reference": "REF-1122", "type": "debit" },
+  { "id": "BNK-011", "date": "2026-04-08", "amount": 18650.00, "description": "APEX SYSTEMS INC PROGRESS BILLING",    "reference": "REF-7755", "type": "debit" },
+  { "id": "BNK-012", "date": "2026-04-14", "amount": 12300.00, "description": "APEX SYSTEMS INC PARTIAL PAYMENT",     "reference": "REF-8001", "type": "debit" }
 ]

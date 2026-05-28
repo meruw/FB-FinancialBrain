@@ -8,15 +8,15 @@ export const briefMock: Brief = {
   closeProbabilityLabel: '62% — session at risk, manual intervention required on multiple blockers',
   blockers: [
     {
-      description: '3 CONSTRUTECH date tolerance misses (avg 4.2 day delay)',
+      description: '3 APEX SYSTEMS INC date tolerance misses (avg 4.2 day posting delay)',
       severity: 'medium',
-      vendor: 'CONSTRUTECH',
+      vendor: 'APEX SYSTEMS INC',
       knownPattern: true,
     },
     {
-      description: '1 BRAUTOTEST SAP entry already matched to prior session',
+      description: '1 GROVE FLEET SERVICES SAP entry already matched to prior session',
       severity: 'high',
-      vendor: 'BRAUTOTEST',
+      vendor: 'GROVE FLEET SERVICES',
       knownPattern: true,
     },
     {
@@ -26,15 +26,15 @@ export const briefMock: Brief = {
       knownPattern: true,
     },
     {
-      description: '1 likely duplicate payment to CONSTRUTECH ($9,800)',
+      description: '1 likely duplicate payment to APEX SYSTEMS INC ($9,800)',
       severity: 'high',
-      vendor: 'CONSTRUTECH',
+      vendor: 'APEX SYSTEMS INC',
       knownPattern: false,
     },
   ],
   recommendations: [
     {
-      action: 'Raise CONSTRUTECH date tolerance to 5 days',
+      action: 'Raise APEX SYSTEMS INC date tolerance to 5 days',
       expectedImpact: 'Resolves 3 blockers, lifts close probability to ~85%',
       priority: 1,
     },
@@ -52,5 +52,5 @@ export const briefMock: Brief = {
   estimatedResolutionMinutes: 18,
   brainInsight:
     'This session matches the December 2025 exception profile — resolved in 8 days. ' +
-    'The CONSTRUTECH tolerance pattern has appeared in 5 of the last 6 months.',
+    'The APEX SYSTEMS INC tolerance pattern has appeared in 5 of the last 6 months.',
 };

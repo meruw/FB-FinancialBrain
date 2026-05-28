@@ -3,13 +3,13 @@
     "id": "UM-001",
     "bankId": "BNK-001",
     "failureReason": "date_tolerance_miss",
-    "details": "Bank debit on 2026-04-28, closest SAP entry (SAP-005) posts 2026-05-02 — 4 days difference, exceeds current 3-day tolerance. CONSTRUTECH has a known avg delay of 4.2 days."
+    "details": "Bank debit on 2026-04-28, closest SAP entry (SAP-005) posts 2026-05-02 — 4 days difference, exceeds current 3-day tolerance. APEX SYSTEMS INC has a known avg posting delay of 4.2 days."
   },
   {
     "id": "UM-002",
     "bankId": "BNK-002",
     "failureReason": "sap_already_matched",
-    "details": "SAP-006 (BRAUTOTEST $8,750) was matched to a prior bank entry in session APR-01. Cannot match BNK-002 against the same SAP document."
+    "details": "SAP-006 (GROVE FLEET SERVICES $8,750) was matched to a prior bank entry in session APR-01. Cannot match BNK-002 against the same SAP document."
   },
   {
     "id": "UM-003",
@@ -21,13 +21,13 @@
     "id": "UM-004",
     "bankId": "BNK-006",
     "failureReason": "no_sap_counterpart",
-    "details": "SPEI transfer fee of $35.00. Same pattern as UM-003 — bank charges not yet reflected in SAP."
+    "details": "Wire transfer fee of $35.00. Same pattern as UM-003 — bank charges not yet reflected in SAP."
   },
   {
     "id": "UM-005",
     "bankId": "BNK-008",
     "failureReason": "likely_duplicate",
-    "details": "BNK-008 and BNK-009 are identical: same amount ($9,800), same date (2026-04-22), same description. Only one SAP counterpart exists. One of these is likely a duplicate payment to CONSTRUTECH."
+    "details": "BNK-008 and BNK-009 are identical: same amount ($9,800), same date (2026-04-22), same description. Only one SAP counterpart exists. One of these is likely a duplicate payment to APEX SYSTEMS INC."
   },
   {
     "id": "UM-006",
@@ -39,12 +39,12 @@
     "id": "UM-007",
     "bankId": "BNK-011",
     "failureReason": "date_tolerance_miss",
-    "details": "Bank debit on 2026-04-08, closest SAP entry (SAP-007) posts 2026-04-12 — 4-day gap exceeds current 3-day tolerance. Consistent with CONSTRUTECH's known avg posting delay of 4.2 days."
+    "details": "Bank debit on 2026-04-08, closest SAP entry (SAP-007) posts 2026-04-12 — 4-day gap exceeds current 3-day tolerance. Consistent with APEX SYSTEMS INC's known avg posting delay of 4.2 days."
   },
   {
     "id": "UM-008",
     "bankId": "BNK-012",
     "failureReason": "date_tolerance_miss",
-    "details": "Bank debit on 2026-04-14, closest SAP entry (SAP-008) posts 2026-04-19 — 5-day gap exceeds current 3-day tolerance. Third consecutive CONSTRUTECH date miss this session — pattern strongly supports raising tolerance to 5 days."
+    "details": "Bank debit on 2026-04-14, closest SAP entry (SAP-008) posts 2026-04-19 — 5-day gap exceeds current 3-day tolerance. Third consecutive APEX SYSTEMS INC date miss this session — pattern strongly supports raising tolerance to 5 days."
   }
 ]

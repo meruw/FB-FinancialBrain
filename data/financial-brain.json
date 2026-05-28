@@ -4,7 +4,7 @@
   "sessionsAnalyzed": 7,
   "vendorProfiles": [
     {
-      "vendor": "CONSTRUTECH",
+      "vendor": "APEX SYSTEMS INC",
       "avgPostingDelay": 4.2,
       "commonIssue": "date_tolerance_miss",
       "occurrencesLast6Months": 6,
@@ -13,16 +13,16 @@
       "notes": "Consistent late poster. Has triggered date_tolerance_miss in Oct, Nov, Dec, Feb, Mar, and Apr. Dec 2025 was worst month — 4 misses. A 5-day tolerance window resolves every historical case."
     },
     {
-      "vendor": "BRAUTOTEST",
+      "vendor": "GROVE FLEET SERVICES",
       "avgPostingDelay": 1.1,
       "commonIssue": "sap_already_matched",
       "occurrencesLast6Months": 5,
       "recommendedTolerance": 3,
       "matchSuccessRate": 0.61,
-      "notes": "SAP document locking is the core issue — BRAUTOTEST payments sometimes get pre-matched in session setup before the accountant can confirm them. Recommend a pre-session audit of recently matched BRAUTOTEST documents."
+      "notes": "SAP document locking is the core issue — payments sometimes get pre-matched in session setup before the accountant can confirm them. Recommend a pre-session audit of recently matched GROVE FLEET SERVICES documents."
     },
     {
-      "vendor": "ACME_LOGISTICS",
+      "vendor": "ACME LOGISTICS",
       "avgPostingDelay": 2.4,
       "commonIssue": "amount_mismatch",
       "occurrencesLast6Months": 2,
@@ -31,7 +31,7 @@
       "notes": "Infrequent issues. Amount mismatches typically trace to freight surcharges added after the PO is issued. Usually resolved with a memo adjustment in SAP."
     },
     {
-      "vendor": "SERVICIOS TECH",
+      "vendor": "NEXCORE TECHNOLOGIES",
       "avgPostingDelay": 0.8,
       "commonIssue": "date_tolerance_miss",
       "occurrencesLast6Months": 0,
@@ -40,7 +40,7 @@
       "notes": "SaaS subscription vendor. Posts same-day or next-day consistently. Zero issues in 7 sessions. Reference vendor for what a clean match profile looks like."
     },
     {
-      "vendor": "GRUPO INMOBILIARIO",
+      "vendor": "MERIDIAN PROPERTIES GROUP",
       "avgPostingDelay": 3.1,
       "commonIssue": "date_tolerance_miss",
       "occurrencesLast6Months": 3,
@@ -49,7 +49,7 @@
       "notes": "Quarterly rent payments. Issues concentrated in Q1 and Q3 when posting staff is transitioning. A 4-day tolerance resolves all historical misses."
     },
     {
-      "vendor": "AGENCIA ADUANAL",
+      "vendor": "HARBOR CUSTOMS BROKERS",
       "avgPostingDelay": 1.9,
       "commonIssue": "amount_mismatch",
       "occurrencesLast6Months": 4,
@@ -73,8 +73,8 @@
   "closeProbability": {
     "current": 0.62,
     "blockers": [
-      "3 CONSTRUTECH date tolerance misses",
-      "1 BRAUTOTEST SAP entry conflict",
+      "3 APEX SYSTEMS INC date tolerance misses",
+      "1 GROVE FLEET SERVICES SAP entry conflict",
       "2 unclassified bank fees",
       "2 suspected duplicate payments pending treasury review"
     ],

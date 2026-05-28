@@ -7,54 +7,54 @@
       "daysToClose": 3,
       "unmatchedAtOpen": 4,
       "closedClean": true,
-      "notes": "Clean month. Only CONSTRUTECH caused a delay (1 date miss). All resolved within the session."
+      "notes": "Clean month. Only APEX SYSTEMS INC caused a delay (1 date miss). All resolved within the session."
     },
     {
       "period": "Nov 2025",
       "daysToClose": 5,
       "unmatchedAtOpen": 7,
       "closedClean": true,
-      "notes": "CONSTRUTECH (2 date misses) and GRUPO INMOBILIARIO quarterly rent (1 date miss) extended close to 5 days. All resolved manually."
+      "notes": "APEX SYSTEMS INC (2 date misses) and MERIDIAN PROPERTIES GROUP quarterly rent (1 date miss) extended close to 5 days. All resolved manually."
     },
     {
       "period": "Dec 2025",
       "daysToClose": 8,
       "unmatchedAtOpen": 9,
       "closedClean": false,
-      "notes": "Worst month on record. CONSTRUTECH caused 4 date misses (year-end volume spike). AGENCIA ADUANAL had 2 amount mismatches due to year-end duty adjustments. Session did not close clean — 1 item carried to January."
+      "notes": "Worst month on record. APEX SYSTEMS INC caused 4 date misses (year-end volume spike). HARBOR CUSTOMS BROKERS had 2 amount mismatches due to year-end duty adjustments. Session did not close clean — 1 item carried to January."
     },
     {
       "period": "Jan 2026",
       "daysToClose": 4,
       "unmatchedAtOpen": 5,
       "closedClean": true,
-      "notes": "Recovered from December. BRAUTOTEST SAP lock caused 1 case. CONSTRUTECH had 1 date miss. Team applied manual matches for both — closed in 4 days."
+      "notes": "Recovered from December. GROVE FLEET SERVICES SAP lock caused 1 case. APEX SYSTEMS INC had 1 date miss. Team applied manual matches for both — closed in 4 days."
     },
     {
       "period": "Feb 2026",
       "daysToClose": 3,
       "unmatchedAtOpen": 3,
       "closedClean": true,
-      "notes": "Best month in 7 sessions. Low transaction volume. CONSTRUTECH had zero issues — unusually fast posting that month. AGENCIA ADUANAL matched cleanly."
+      "notes": "Best month in 7 sessions. Low transaction volume. APEX SYSTEMS INC had zero issues — unusually fast posting that month. HARBOR CUSTOMS BROKERS matched cleanly."
     },
     {
       "period": "Mar 2026",
       "daysToClose": 6,
       "unmatchedAtOpen": 8,
       "closedClean": true,
-      "notes": "CONSTRUTECH (2 date misses), BRAUTOTEST (2 SAP locks), and 2 unposted bank fees. Took 6 days but closed clean. GRUPO INMOBILIARIO Q1 rent caused 1 additional date miss."
+      "notes": "APEX SYSTEMS INC (2 date misses), GROVE FLEET SERVICES (2 SAP locks), and 2 unposted bank fees. Took 6 days but closed clean. MERIDIAN PROPERTIES GROUP Q1 rent caused 1 additional date miss."
     },
     {
       "period": "Apr 2026",
       "daysToClose": null,
       "unmatchedAtOpen": 8,
       "closedClean": null,
-      "notes": "Session in progress. 3 CONSTRUTECH date misses, 2 suspected duplicate payments (BNK-008/BNK-009), 1 BRAUTOTEST SAP lock, 2 unposted bank fees. Projected close probability: 62%."
+      "notes": "Session in progress. 3 APEX SYSTEMS INC date misses, 2 suspected duplicate payments (BNK-008/BNK-009), 1 GROVE FLEET SERVICES SAP lock, 2 unposted bank fees. Projected close probability: 62%."
     }
   ],
   "topRecurringIssues": [
     {
-      "vendor": "CONSTRUTECH",
+      "vendor": "APEX SYSTEMS INC",
       "issue": "date_tolerance_miss",
       "monthsAppeared": 6,
       "matchCount": 17,
@@ -62,12 +62,12 @@
       "recommendation": "Raise tolerance to 5 days. Would have auto-resolved 11 of 13 historical cases."
     },
     {
-      "vendor": "BRAUTOTEST",
+      "vendor": "GROVE FLEET SERVICES",
       "issue": "sap_already_matched",
       "monthsAppeared": 4,
       "matchCount": 12,
       "lastOccurrence": "2026-03-15T00:00:00Z",
-      "recommendation": "Pre-session audit of recently matched BRAUTOTEST SAP documents before opening reconciliation."
+      "recommendation": "Pre-session audit of recently matched GROVE FLEET SERVICES SAP documents before opening reconciliation."
     },
     {
       "vendor": null,
@@ -75,10 +75,10 @@
       "monthsAppeared": 7,
       "matchCount": null,
       "lastOccurrence": null,
-      "recommendation": "Bank fees (commissions, SPEI charges) appear in all 7 sessions without a GL counterpart. Establish same-day GL posting rule for bank-originated fees."
+      "recommendation": "Bank fees (commissions, wire charges) appear in all 7 sessions without a GL counterpart. Establish same-day GL posting rule for bank-originated fees."
     },
     {
-      "vendor": "AGENCIA ADUANAL",
+      "vendor": "HARBOR CUSTOMS BROKERS",
       "issue": "amount_mismatch",
       "monthsAppeared": 4,
       "matchCount": 9,
