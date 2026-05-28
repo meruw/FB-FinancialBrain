@@ -53,7 +53,7 @@ export function PastClosingsModal({ open, onClose }: PastClosingsModalProps) {
     setLoading(true);
     setError(null);
     api.getReports()
-      .then(setReports)
+      .then((r) => setReports(r.filter((f) => f.name.endsWith('.pdf'))))
       .catch((err) => setError(String(err)))
       .finally(() => setLoading(false));
   }, [open, reports]);
