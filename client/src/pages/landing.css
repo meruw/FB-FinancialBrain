@@ -374,8 +374,8 @@
   left: 50% !important;
   z-index: 15;
   pointer-events: none;
-  will-change: transform;
-  /* The inline `transform` style on this element is set by useAsciiScale(). */
+  /* will-change: transform removed — it caused Firefox to defer the GPU layer
+     until a layout change, making the animation invisible on first render. */
 }
 .landing-ascii,
 .landing-ascii *,

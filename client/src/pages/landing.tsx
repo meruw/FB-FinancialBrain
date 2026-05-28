@@ -100,9 +100,12 @@ function AnimatedBackground() {
     // proportionally instead of re-randomizing them (avoids visible jumps).
     function resize() {
       if (!canvas || !ctx) return;
-      const rect = canvas.getBoundingClientRect();
-      const w = Math.max(1, Math.floor(rect.width));
-      const h = Math.max(1, Math.floor(rect.height));
+      // This canvas is always position:absolute;inset:0 on a 100vh parent,
+      // so it's always the viewport size. Use window dimensions directly —
+      // getBoundingClientRect in Firefox's useLayoutEffect can return any wrong
+      // small value (not just 0), so || fallback isn't reliable.
+      const w = Math.max(1, window.innerWidth);
+      const h = Math.max(1, window.innerHeight);
       if (w === width && h === height) return;
       const dpr = window.devicePixelRatio || 1;
       canvas.width  = Math.floor(w * dpr);
@@ -499,7 +502,7 @@ const ASCII_NATIVE_W = 2160;
 const ASCII_NATIVE_H = 1800;
 
 function useAsciiTransform(ref: React.RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     function update() {

@@ -24,12 +24,6 @@ function formatAmount(amount: number): string {
   return `${prefix}${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
 }
 
-// Payment-method label from reference prefix (e.g. "WIRE-88142" → "WIRE")
-function getTypeLabel(reference: string): string {
-  const prefix = reference.split('-')[0]?.toUpperCase() ?? '';
-  const map: Record<string, string> = { JE: 'JOURNAL', EX: 'EXPENSE' };
-  return map[prefix] ?? prefix;
-}
 
 // ── animation variants ────────────────────────────────────────────────────────
 
@@ -148,7 +142,7 @@ export function TransactionTable({
               {/* Type badge */}
               <div className={CELL}>
                 <span className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
-                  {getTypeLabel(txn.reference)}
+                  {txn.type}
                 </span>
               </div>
 
