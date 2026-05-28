@@ -2,13 +2,21 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../env.js';
 import { logger } from '../utils/logger.js';
 
-/**
- * One client, reused. Anthropic SDK reads ANTHROPIC_API_KEY from env automatically,
- * but we pass it explicitly for clarity.
- */
 // maxRetries=0 because every route already falls back to a mock on failure.
-// Retries just delay the fallback without adding value in a demo context.
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 0 });
+// Lazy so that configureAnthropicKey() (called from startup after Key Vault fetch) takes effect.
+let _client: Anthropic | null = null;
+
+function getClient(): Anthropic {
+  if (!_client) {
+    _client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 0 });
+  }
+  return _client;
+}
+
+/** Called by index.ts after fetching the key from Azure Key Vault. */
+export function configureAnthropicKey(apiKey: string): void {
+  _client = new Anthropic({ apiKey, maxRetries: 0 });
+}
 
 export interface ClaudeCallOptions {
   /** Override the default model for this call. Useful for Narrator -> Opus. */
@@ -40,7 +48,7 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<string> {
   const start = Date.now();
 
   try {
-    const response = await client.messages.create(
+    const response = await getClient().messages.create(
       {
         model,
         max_tokens: opts.maxTokens ?? 1024,

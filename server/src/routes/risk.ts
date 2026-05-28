@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { callClaude, extractJson } from '../services/claude.js';
 import { loadBrain, findVendorProfile } from '../services/brain.js';
 import { loadBankTransactions, loadUnmatchedCases } from '../services/data.js';
+import { alertCriticalRisk } from '../services/servicebus.js';
 import { riskSchema, type RiskAssessment } from '../schemas/risk.js';
 import { riskPrompt } from '../prompts/risk.js';
 import { riskMock } from '../mocks/risk.js';
@@ -79,6 +80,13 @@ riskRouter.post('/', async (req, res) => {
 
     const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024, timeoutMs: 12000 });
     const validated: RiskAssessment = riskSchema.parse(extractJson(text));
+
+    // Fire-and-forget — alert via Azure Service Bus if configured and risk is critical
+    if (validated.riskLevel === 'critical') {
+      alertCriticalRisk(transactionId, validated.riskLabel).catch((err) =>
+        logger.warn('servicebus.alert.fail', { error: String(err) })
+      );
+    }
 
     return res.json(validated);
   } catch (err) {
