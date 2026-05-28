@@ -77,7 +77,7 @@ riskRouter.post('/', async (req, res) => {
       })),
     });
 
-    const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024 });
+    const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024, timeoutMs: 12000 });
     const validated: RiskAssessment = riskSchema.parse(extractJson(text));
 
     return res.json(validated);
