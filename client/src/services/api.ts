@@ -54,6 +54,19 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function postForBlob<TBody>(path: string, body: TBody): Promise<Blob> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`API ${path} failed: ${res.status} ${text}`);
+  }
+  return res.blob();
+}
+
 export const api = {
   health: async (): Promise<{ ok: boolean; demoMode: boolean; model: string }> => {
     const res = await fetch('/api/health');
@@ -82,6 +95,9 @@ export const api = {
 
   simulate: (req: SimulateRequest) =>
     postJson<SimulateRequest, SimulationResult>('/api/simulate', req),
+
+  exportPdf: (narrator: Narrative) =>
+    postForBlob<{ narrator: Narrative }>('/api/export/pdf', { narrator }),
   
 // Data endpoints
   getBrain: () => getJson<FinancialBrain>('/api/data/brain'),

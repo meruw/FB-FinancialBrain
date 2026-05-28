@@ -7,11 +7,13 @@ import {
   Clipboard,
   Cpu,
   Download,
+  FileText,
   ArrowRight,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { Typewriter } from '@/components/effects/Typewriter';
 import { useNarrator } from './useNarrator';
+import { api } from '@/services/api';
 import type { NarrativeInsight, Narrative } from '@/types/domain';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
@@ -85,6 +87,8 @@ export function Narrator() {
   const [sectionsVisible, setSectionsVisible] = useState(false);
   const [actionsVisible, setActionsVisible]   = useState(false);
   const [copied, setCopied]                   = useState(false);
+  const [pdfLoading, setPdfLoading]           = useState(false);
+  const [pdfError, setPdfError]               = useState<string | null>(null);
 
   const fallbackRef  = useRef<number>(0);
   const actionsRef   = useRef<number>(0);
@@ -142,6 +146,25 @@ export function Narrator() {
     a.download = 'recon-report-may-2026.txt';
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function handleDownloadPdf() {
+    if (!data || pdfLoading) return;
+    setPdfLoading(true);
+    setPdfError(null);
+    try {
+      const blob = await api.exportPdf(data);
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'recon-report-may-2026.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setPdfError(String(err));
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   // ── 1. Initial state ──
@@ -338,22 +361,45 @@ export function Narrator() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...POP }}
-              className="flex gap-2"
+              className="flex flex-col gap-2"
             >
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { void handleCopy(); }}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-slate-50"
+                >
+                  <Clipboard size={13} />
+                  {copied ? 'Copied ✓' : 'Copy to Clipboard'}
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-slate-50"
+                >
+                  <Download size={13} />
+                  Download .txt
+                </button>
+              </div>
               <button
-                onClick={() => { void handleCopy(); }}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-slate-50"
+                onClick={() => { void handleDownloadPdf(); }}
+                disabled={pdfLoading}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/60 px-4 py-2 text-xs font-medium text-purple-700 transition-colors hover:border-purple-300 hover:bg-purple-50 disabled:cursor-wait disabled:opacity-70"
+                style={{ color: pdfLoading ? undefined : PURPLE }}
               >
-                <Clipboard size={13} />
-                {copied ? 'Copied ✓' : 'Copy to Clipboard'}
+                {pdfLoading ? (
+                  <>
+                    <Spinner size={13} />
+                    Generating PDF…
+                  </>
+                ) : (
+                  <>
+                    <FileText size={13} />
+                    Download closing PDF
+                  </>
+                )}
               </button>
-              <button
-                onClick={handleDownload}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-slate-50"
-              >
-                <Download size={13} />
-                Download .txt
-              </button>
+              {pdfError && (
+                <p className="text-[11px] text-red-500">PDF export failed. Try again.</p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
