@@ -5,9 +5,11 @@ import { useSessionStore } from '@/store/session';
 import { Spinner } from '@/components/ui/Spinner';
 import { Typewriter } from '@/components/effects/Typewriter';
 import { RecommendationCard } from '@/components/ui/RecommendationCard';
+import { MemoriesProvenance } from '@/components/ui/MemoriesProvenance';
+import type { ProvenanceRow } from '@/components/ui/MemoriesProvenance';
 import { useMatchDebugger } from './useMatchDebugger';
 import { useAdvisor } from './useAdvisor';
-import type { FailureReason } from '@/types/domain';
+import type { AdvisorProvenance, FailureReason } from '@/types/domain';
 
 const PURPLE = '#8E31B5';
 
@@ -60,6 +62,30 @@ const STATUS_DOT: Record<TraceStep['status'], string> = {
 
 const CARD = 'rounded-xl border border-slate-100 bg-white p-4 shadow-sm';
 const POP  = { type: 'spring' as const, stiffness: 260, damping: 22, mass: 0.8 };
+
+function fmtDate(iso: string): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(iso));
+}
+
+function provenanceToRows(p: AdvisorProvenance): ProvenanceRow[] {
+  const rows: ProvenanceRow[] = [
+    {
+      label: 'Historical accuracy',
+      value: `${(p.historicalAccuracy.rate * 100).toFixed(1)}% over ${p.historicalAccuracy.matchCount} matches`,
+    },
+    {
+      label: 'Pattern source',
+      value: `${p.patternSource.hitCount} of last ${p.patternSource.windowSize} ${p.patternSource.windowUnit}`,
+    },
+  ];
+  if (p.lastSimilarAction) {
+    rows.push({
+      label: 'Last similar action',
+      value: `${fmtDate(p.lastSimilarAction.occurredAt)} · ${p.lastSimilarAction.outcome}`,
+    });
+  }
+  return rows;
+}
 
 export function MatchDebugger() {
   const selectedId = useSessionStore((s) => s.selectedTransactionId);
@@ -264,17 +290,22 @@ export function MatchDebugger() {
               )}
 
               {!advisorLoading && advisor && (
-                <RecommendationCard
-                  action={advisor.action}
-                  actionType={advisor.actionType}
-                  steps={advisor.steps}
-                  risk={advisor.risk}
-                  confidenceScore={advisor.confidenceScore}
-                  brainBasis={advisor.brainBasis}
-                  onAccept={() => { void accept(); }}
-                  onSkip={skip}
-                  accepting={accepting}
-                />
+                <>
+                  <RecommendationCard
+                    action={advisor.action}
+                    actionType={advisor.actionType}
+                    steps={advisor.steps}
+                    risk={advisor.risk}
+                    confidenceScore={advisor.confidenceScore}
+                    brainBasis={advisor.brainBasis}
+                    onAccept={() => { void accept(); }}
+                    onSkip={skip}
+                    accepting={accepting}
+                  />
+                  {advisor.provenance && (
+                    <MemoriesProvenance rows={provenanceToRows(advisor.provenance)} />
+                  )}
+                </>
               )}
             </motion.div>
           )}

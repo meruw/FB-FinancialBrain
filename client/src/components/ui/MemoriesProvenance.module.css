@@ -1,0 +1,30 @@
+.provenance {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.provenance__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--fb-border);
+  font-size: 13px;
+  margin: 0;
+}
+
+.provenance__label {
+  color: var(--fb-text-muted);
+  font-weight: var(--fb-weight-ui);
+  margin: 0;
+}
+
+.provenance__value {
+  color: var(--fb-text);
+  font-weight: var(--fb-weight-semi);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  text-align: right;
+}

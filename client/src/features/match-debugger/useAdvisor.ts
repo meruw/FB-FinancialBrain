@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSessionStore } from '@/store/session';
+import { useDataStore } from '@/store/data';
 import { api } from '@/services/api';
 import { advisorMock } from './Advisor.mock';
 import type { AdvisorResolution, ResolveResult } from '@/types/domain';
@@ -16,6 +17,7 @@ interface UseAdvisorResult {
 
 export function useAdvisor(): UseAdvisorResult {
   const transactionId = useSessionStore((s) => s.selectedTransactionId);
+  const applyResolve  = useDataStore((s) => s.applyResolve);
 
   const [data, setData]               = useState<AdvisorResolution | null>(null);
   const [loading, setLoading]         = useState(false);
@@ -49,6 +51,7 @@ export function useAdvisor(): UseAdvisorResult {
     try {
       const result = await api.resolve(data.transactionId, data.actionType);
       setResolve(result);
+      applyResolve(result);   // update store: remove unmatched, bump closeProbability
       setAccepted(true);
     } catch {
       // Absorb — in demo, show accepted anyway
@@ -56,7 +59,7 @@ export function useAdvisor(): UseAdvisorResult {
     } finally {
       setAccepting(false);
     }
-  }, [data, accepting, accepted]);
+  }, [data, accepting, accepted, applyResolve]);
 
   const skip = useCallback(() => setSkipped(true), []);
 

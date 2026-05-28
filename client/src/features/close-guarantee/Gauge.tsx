@@ -89,6 +89,14 @@ export function Gauge({ value, size = 320, title = 'CLOSE PROBABILITY' }: GaugeP
   // dashoffset 0 = full arc, arcLen = empty arc
   const dashOffset = arcLen * (1 - animVal / 100);
 
+  // Scale font sizes proportionally so the component works at any `size`.
+  // At the default 320 px the ratios below reproduce the Gauge.css values exactly.
+  const scale       = size / 320;
+  const numPx       = Math.round(84 * scale);
+  const pctPx       = Math.round(40 * scale);
+  const titlePx     = Math.max(9,  Math.round(12 * scale));
+  const titleMtPx   = Math.max(4,  Math.round(14 * scale));
+
   return (
     <div className="gauge-wrap" style={{ width: size, height: size }}>
       <svg
@@ -152,10 +160,14 @@ export function Gauge({ value, size = 320, title = 'CLOSE PROBABILITY' }: GaugeP
 
       <div className="gauge-label">
         <div className="gauge-value">
-          <span className="gauge-number">{dispNum}</span>
-          <span className="gauge-percent">%</span>
+          <span className="gauge-number" style={{ fontSize: numPx }}>{dispNum}</span>
+          <span className="gauge-percent" style={{ fontSize: pctPx }}>%</span>
         </div>
-        {title && <div className="gauge-title">{title}</div>}
+        {title && (
+          <div className="gauge-title" style={{ fontSize: titlePx, marginTop: titleMtPx }}>
+            {title}
+          </div>
+        )}
       </div>
     </div>
   );

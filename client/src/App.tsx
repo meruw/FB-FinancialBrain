@@ -8,6 +8,7 @@ import { MatchDebugger } from '@/features/match-debugger/MatchDebugger';
 import { RiskFirewall } from '@/features/risk-firewall/RiskFirewall';
 import { Narrator } from '@/features/narrator/Narrator';
 import { AppHeader } from '@/components/AppHeader';
+import { CloseProbabilityPanel } from '@/components/brain/CloseProbabilityPanel';
 import type { BankTransaction, SapTransaction } from '@/types/domain';
 
 function normalizeSap(sap: SapTransaction[]): BankTransaction[] {
@@ -140,7 +141,16 @@ function App() {
 
         {/* Right zone — Brain Panel (35 %) */}
         <div className="flex h-full w-[35%] flex-col bg-white">
-          {isClosed ? <Narrator /> : <MatchDebugger />}
+          {isClosed ? (
+            <Narrator />
+          ) : (
+            <>
+              <CloseProbabilityPanel />
+              <div className="flex-1 overflow-y-auto">
+                <MatchDebugger />
+              </div>
+            </>
+          )}
         </div>
 
       </div>

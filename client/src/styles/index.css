@@ -4,13 +4,20 @@
 
 /* ── Brand tokens ────────────────────────────────────────────────────────────── */
 :root {
-  --fb-brand:    #8E31B5;
-  --fb-blue:     #5793EC;
-  --fb-bg:       #EDF2FA;
-  --fb-surface:  #ffffff;
-  --fb-border:   #e2e8f0;
-  --fb-text:     #111827;
-  --fb-muted:    #9ca3af;
+  /* ── Colors ── */
+  --fb-brand:      #8E31B5;
+  --fb-blue:       #5793EC;
+  --fb-bg:         #EDF2FA;
+  --fb-surface:    #FFFFFF;
+  --fb-border:     #E1E8F2;
+  --fb-text:       #333333;
+  --fb-text-muted: #666666;
+  --fb-muted:      #9ca3af;   /* legacy alias — prefer --fb-text-muted */
+
+  /* ── Font weights (Mulish) ── */
+  --fb-weight-body: 400;
+  --fb-weight-ui:   500;
+  --fb-weight-semi: 600;
 }
 
 /* ── Typography ──────────────────────────────────────────────────────────────── */
