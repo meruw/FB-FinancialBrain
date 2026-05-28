@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, Rocket, X } from 'lucide-react';
 import AsciiMotionAnimation from '@/components/ascii-motion-animation';
 import './landing.css';
@@ -56,7 +56,10 @@ type LinkCandidate = { d: number; ax: number; ay: number; bx: number; by: number
 function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  useEffect(() => {
+  // useLayoutEffect instead of useEffect so the canvas is sized and painted
+  // synchronously before the browser's first render — eliminates the Chrome
+  // white-flash caused by an uninitialized compositing layer.
+  useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -216,6 +219,9 @@ function AnimatedBackground() {
 
     // ── Initial sizing + observers ───────────────────────────────────────────
     resize();
+    // Pre-paint synchronously so Chrome has dark canvas content before the
+    // first rAF fires — prevents white compositing-layer flash on first render.
+    step(0);
 
     function onPointerMove(e: PointerEvent) {
       const rect = canvas!.getBoundingClientRect();
