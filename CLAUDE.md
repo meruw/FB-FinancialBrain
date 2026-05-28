@@ -363,25 +363,34 @@ and update `domain.ts` + the matching Zod schema together.
 
 **Your territory:** everything inside `server/`.
 
-**STATUS (as of Session 3 — 2026-05-27): BACKEND IS COMPLETE.**
-All 6 AI feature routes, the data router, and all supporting services are
+**STATUS (as of Session 4 — 2026-05-27): BACKEND IS COMPLETE.**
+All AI feature routes, the data router, PDF export, and all supporting services are
 implemented, tested with real Claude calls, and validated end-to-end.
 Do not re-scaffold — extend or fix instead.
+
+**Product name:** FastBank Memories (brand/UI). "Financial Brain" remains the technical
+term used in code (services, data files, prompt context). Both names coexist.
 
 Session 2 additions: `/api/advisor` (Resolution Advisor), `buildSystemPrompt()`
 shared prompt builder, `findVendorProfile()`, `resolveTransaction()`, per-call
 timeouts, SDK retries disabled, data enriched to 12 bank txns / 8 unmatched cases.
 
 Session 3 additions: `/api/simulate` (What-If Simulator), `/api/resolve` (accept recommendation → live probability update),
-`computeCloseProbability()`
-and `computeNextCloseProjection()` utilities, close probability now computed from Brain
-data (not Claude), narrator projection fields injected from code, brief switched to Haiku
-with targeted Brain context, narrator switched to `buildNarratorContext()` (targeted Brain),
-narrator timeout raised to 25s (20s response is intentional — demo suspense moment),
-advisor extended with `confidenceScore` + `provenance` block (all computed from Brain,
-not Claude), Brain enriched to 6 vendor profiles with notes, historical-patterns enriched
-with per-month notes and lastOccurrence/matchCount per vendor, session JSON enriched
-with periodStart/periodEnd/accountNumber/currency/sapBalance.
+`computeCloseProbability()` and `computeNextCloseProjection()` utilities, close probability
+now computed from Brain data (not Claude), narrator projection fields injected from code,
+brief switched to Haiku with targeted Brain context, narrator switched to
+`buildNarratorContext()` (targeted Brain), narrator timeout raised to 25s (20s response
+is intentional — demo suspense moment), advisor extended with `confidenceScore` +
+`provenance` block (all computed from Brain, not Claude), Brain enriched to 6 vendor
+profiles with notes, historical-patterns enriched with per-month notes and
+lastOccurrence/matchCount per vendor, session JSON enriched with
+periodStart/periodEnd/accountNumber/currency/sapBalance.
+
+Session 4 additions: `/api/export/pdf` (Puppeteer PDF closing report), architecture
+cleanup — `services/resolveState.ts` (resolve state extracted from data.ts),
+`services/pdf.ts` (browser lifecycle extracted from route), MonthlyClose types fixed
+(daysToClose/closedClean now nullable for in-progress sessions), Anthropic TLS
+connection pre-warmed on server startup.
 
 **All live endpoints:**
 
@@ -411,6 +420,18 @@ with periodStart/periodEnd/accountNumber/currency/sapBalance.
 - Add fields to `data/financial-brain.json` if the demo pitch needs them
 - `server/src/services/brain.ts` loads `data/financial-brain.json` — do not hardcode Brain data in prompts
 - `server/src/services/claude.ts` is the only place the Anthropic SDK is touched
+
+**Testing PDF without spending tokens:**
+`/api/export/pdf` does not call Claude — it only needs narrator output as input.
+With `DEMO_MODE=true`, call `/api/narrate` first (returns mock instantly), then pass
+that response body to `/api/export/pdf`. Full PDF generation, zero API cost.
+```bash
+NARRATOR=$(curl -s -X POST http://localhost:4000/api/narrate \
+  -H 'Content-Type: application/json' -d '{"sessionId":"SESSION-APR-2026"}')
+curl -s -X POST http://localhost:4000/api/export/pdf \
+  -H 'Content-Type: application/json' \
+  -d "{\"narrator\": $NARRATOR}" --output closing.pdf
+```
 
 **Your API contract:** the Zod schemas in `server/src/schemas/`. Do not change
 their shape without syncing with the frontend engineer and updating
