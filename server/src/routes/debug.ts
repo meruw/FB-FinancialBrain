@@ -63,7 +63,7 @@ debugRouter.post('/', async (req, res) => {
       })),
     });
 
-    const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024 });
+    const text = await callClaude({ system, user, temperature: 0, maxTokens: 1024, timeoutMs: 15000 });
     const validated: DebugDiagnosis = debugSchema.parse(extractJson(text));
 
     return res.json(validated);

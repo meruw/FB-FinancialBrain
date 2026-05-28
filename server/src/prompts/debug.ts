@@ -54,18 +54,18 @@ export function debugPrompt(input: DebugPromptInput): { system: string; user: st
       : 'No SAP candidates found near this date/amount.';
 
   const user = `
-Financial Brain (customer context):
-${input.brain}
-
-Bank transaction that failed to match:
+Bank transaction to diagnose:
 ${JSON.stringify(input.bankTransaction, null, 2)}
 
-AUTHORITATIVE FAILURE REASON (do not override — this is what the matching engine determined): ${input.unmatchedCase.failureReason}
+AUTHORITATIVE FAILURE REASON (do not override): ${input.unmatchedCase.failureReason}
 Matching engine details: ${input.unmatchedCase.details}
 
 ${sapSection}
 
-Diagnose this transaction now. Your rootCause MUST match the authoritative failure reason above.
+Financial Brain (customer history for context):
+${input.brain}
+
+Diagnose the transaction above. Your rootCause MUST equal the authoritative failure reason stated above.
 `.trim();
 
   return { system, user };

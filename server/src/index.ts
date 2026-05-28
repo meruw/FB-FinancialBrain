@@ -58,7 +58,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
-app.listen(env.PORT, () => {
+app.listen(env.PORT, '0.0.0.0', () => {
   logger.info('server.up', {
     port: env.PORT,
     demoMode: env.DEMO_MODE,
