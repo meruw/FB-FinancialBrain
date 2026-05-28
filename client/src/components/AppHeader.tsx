@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Brain, TrendingUp, X } from 'lucide-react';
+import { Brain, Sparkles, TrendingUp, X } from 'lucide-react';
 import type { ReconciliationSession } from '@/types/domain';
 
 const PURPLE = '#8E31B5';
@@ -42,6 +42,8 @@ export interface AppHeaderProps {
   onGaugeOpen?: () => void;
   onGaugeLeave?: () => void;
   onGaugeToggle?: () => void;
+  // What-If simulator launcher
+  onWhatIfOpen?: () => void;
 }
 
 export function AppHeader({
@@ -55,6 +57,7 @@ export function AppHeader({
   onGaugeOpen,
   onGaugeLeave,
   onGaugeToggle,
+  onWhatIfOpen,
 }: AppHeaderProps) {
   const currency    = session?.currency ?? 'MXN';
   const bankBalance = session?.endingBalance;
@@ -129,6 +132,17 @@ export function AppHeader({
             <span className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-500">
               {unmatchedCount} unresolved
             </span>
+          )}
+
+          {/* What-If launcher */}
+          {!isClosed && onWhatIfOpen && (
+            <button
+              onClick={onWhatIfOpen}
+              className="flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50/60 px-2.5 py-1 text-[11px] font-medium text-purple-600 transition-colors hover:border-purple-300 hover:bg-purple-50"
+            >
+              <Sparkles size={11} />
+              What if?
+            </button>
           )}
 
           {/* Close probability chip — always visible, toggles the gauge panel */}

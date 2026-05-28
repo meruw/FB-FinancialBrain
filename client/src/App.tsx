@@ -49,6 +49,8 @@ function App() {
 
   // Gauge: open/close + hover + pin state
   const [gaugeOpen, setGaugeOpen]  = useState(false);
+  // What-If simulator modal
+  const [whatIfOpen, setWhatIfOpen] = useState(false);
   const pinnedRef        = useRef(false);
   const closeTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,6 +106,14 @@ function App() {
     void loadAll();
   }, [loadAll]);
 
+  // Esc closes the What-If modal
+  useEffect(() => {
+    if (!whatIfOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setWhatIfOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [whatIfOpen]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-[#EDF2FA]">
@@ -152,6 +162,7 @@ function App() {
         onGaugeOpen={openGauge}
         onGaugeLeave={leaveGauge}
         onGaugeToggle={togglePin}
+        onWhatIfOpen={() => setWhatIfOpen(true)}
       />
 
       {/* ── Floating gauge panel — fixed so it clears overflow:hidden ── */}
@@ -275,6 +286,40 @@ function App() {
         </div>
 
       </div>
+
+      {/* ── What-If modal ── */}
+      <AnimatePresence>
+        {whatIfOpen && (
+          <motion.div
+            key="whatif-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setWhatIfOpen(false)}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+          >
+            <motion.div
+              key="whatif-card"
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 4 }}
+              transition={POP}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex h-[min(720px,90vh)] w-[min(480px,92vw)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            >
+              <button
+                onClick={() => setWhatIfOpen(false)}
+                aria-label="Close What If"
+                className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-gray-300 transition-colors hover:bg-slate-50 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+              <WhatIfSimulator />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
