@@ -78,7 +78,7 @@ function buildDocText(data: Narrative): string {
   }
   lines.push('---');
   lines.push(
-    `Next close projection: ${Math.round(data.nextCloseProbability * 100)}% (+${Math.round(data.nextCloseDelta * 100)}%)`,
+    `Next close projection: ${Math.round(data.nextCloseProbability * 100)}% (+${data.nextCloseDelta}%)`,
   );
   lines.push(`${data.sessionsToTarget} sessions until 95%+ close rate`);
   return lines.join('\n');
@@ -484,7 +484,7 @@ export function Narrator() {
                   Next close projection:{' '}
                   {Math.round(data.nextCloseProbability * 100)}%{' '}
                   <span style={{ color: PURPLE }}>
-                    (+{Math.round(data.nextCloseDelta * 100)}%)
+                    (+{data.nextCloseDelta}%)
                   </span>
                 </p>
                 <p className="mt-0.5 text-xs text-gray-400">

@@ -38,6 +38,6 @@ export const narratorMock: Narrative = {
     resolvedBlockers: 4,
   },
   nextCloseProbability: 0.76,
-  nextCloseDelta: 0.14,
+  nextCloseDelta: 14,
   sessionsToTarget: 3,
 };
