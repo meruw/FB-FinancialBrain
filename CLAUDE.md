@@ -403,6 +403,7 @@ with periodStart/periodEnd/accountNumber/currency/sapBalance.
 | POST | `/api/advisor` | AI resolution advisor — actionType + steps[] for one transaction |
 | POST | `/api/simulate` | What-If Simulator — projects close probability for a given scenario |
 | POST | `/api/resolve` | Accept a recommendation — marks resolved, returns updated closeProbability |
+| POST | `/api/export/pdf` | Generate closing report PDF from narrator output (Puppeteer) |
 
 **Your job (ongoing):**
 - Fix bugs in existing routes / prompts / schemas

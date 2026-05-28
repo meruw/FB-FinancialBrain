@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { logger } from '../utils/logger.js';
+import { isResolved, buildSyntheticMatches, resetResolvedState } from './resolveState.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,10 +41,15 @@ export interface MatchedRecord {
 export interface ReconciliationSession {
   id: string;
   period: string;
+  periodStart?: string;
+  periodEnd?: string;
   account: string;
+  accountNumber?: string;
+  currency?: string;
   status: 'open' | 'in_progress' | 'closed';
   openedAt: string;
   endingBalance: number;
+  sapBalance?: number;
   difference: number;
   totals: {
     bank: { count: number; sum: number };
@@ -58,9 +64,10 @@ export interface ReconciliationSession {
 
 export interface MonthlyClose {
   period: string;
-  daysToClose: number;
+  daysToClose: number | null;
   unmatchedAtOpen: number;
-  closedClean: boolean;
+  closedClean: boolean | null;
+  notes?: string;
 }
 
 export interface HistoricalPatterns {
@@ -109,25 +116,6 @@ let cachedMatchedRecords: MatchedRecord[] | null = null;
 let cachedSession: ReconciliationSession | null = null;
 let cachedHistoricalPatterns: HistoricalPatterns | null = null;
 
-// ─── In-memory resolve state ──────────────────────────────────────────────────
-//
-// Tracks which bank transactions have been accepted via POST /api/resolve.
-// Persists for the lifetime of the server process — POST /api/data/reload clears it.
-// This lets the close probability gauge rise live during the demo without any DB writes.
-
-const resolvedBankIds = new Set<string>();
-const resolvedTimestamps = new Map<string, string>();
-
-export function markResolved(bankId: string): void {
-  resolvedBankIds.add(bankId);
-  resolvedTimestamps.set(bankId, new Date().toISOString());
-}
-
-export function resetResolvedState(): void {
-  resolvedBankIds.clear();
-  resolvedTimestamps.clear();
-}
-
 // ─── Public loaders ───────────────────────────────────────────────────────────
 
 export async function loadBankTransactions(): Promise<BankTransaction[]> {
@@ -146,22 +134,18 @@ export async function loadUnmatchedCases(): Promise<UnmatchedCase[]> {
   if (!cachedUnmatchedCases) {
     cachedUnmatchedCases = await readDataFile<UnmatchedCase[]>('unmatched-cases.json');
   }
-  if (resolvedBankIds.size === 0) return cachedUnmatchedCases;
-  return cachedUnmatchedCases.filter((c) => !resolvedBankIds.has(c.bankId));
+  const synthetic = buildSyntheticMatches();
+  if (synthetic.length === 0) return cachedUnmatchedCases;
+  const resolvedIds = new Set(synthetic.map((r) => r.bankId));
+  return cachedUnmatchedCases.filter((c) => !resolvedIds.has(c.bankId));
 }
 
 export async function loadMatchedRecords(): Promise<MatchedRecord[]> {
   if (!cachedMatchedRecords) {
     cachedMatchedRecords = await readDataFile<MatchedRecord[]>('matched-records.json');
   }
-  if (resolvedBankIds.size === 0) return cachedMatchedRecords;
-  const synthetic: MatchedRecord[] = [...resolvedBankIds].map((bankId) => ({
-    id: `MANUAL-${bankId}`,
-    bankId,
-    sapId: `SAP-MANUAL-${bankId}`,
-    ruleUsed: 'ManualMatch',
-    matchedAt: resolvedTimestamps.get(bankId) ?? new Date().toISOString(),
-  }));
+  const synthetic = buildSyntheticMatches();
+  if (synthetic.length === 0) return cachedMatchedRecords;
   return [...cachedMatchedRecords, ...synthetic];
 }
 
@@ -198,5 +182,5 @@ export function clearDataCache(): void {
   cachedMatchedRecords = null;
   cachedSession = null;
   cachedHistoricalPatterns = null;
-  resetResolvedState();
+  resetResolvedState(); // also wipes in-memory resolve state so reload is a full demo reset
 }
