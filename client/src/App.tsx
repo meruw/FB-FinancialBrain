@@ -4,6 +4,7 @@ import { TrendingUp, X } from 'lucide-react';
 import { useSessionStore } from '@/store/session';
 import { useDataStore } from '@/store/data';
 import Landing from '@/pages/landing';
+import LoadingScreen from '@/pages/LoadingScreen';
 import { CloseGuarantee } from '@/features/close-guarantee/CloseGuarantee';
 import { Gauge } from '@/features/close-guarantee/Gauge';
 import { TransactionTable } from '@/components/reconciliation/TransactionTable';
@@ -32,6 +33,7 @@ function App() {
   const status            = useSessionStore((s) => s.status);
   const sessionId         = useSessionStore((s) => s.sessionId);
   const startDemo         = useSessionStore((s) => s.startDemo);
+  const enterBriefing     = useSessionStore((s) => s.enterBriefing);
   const closeSession      = useSessionStore((s) => s.closeSession);
   const selectedId        = useSessionStore((s) => s.selectedTransactionId);
   const selectTransaction = useSessionStore((s) => s.selectTransaction);
@@ -136,6 +138,10 @@ function App() {
 
   if (status === 'landing') {
     return <Landing onStart={startDemo} onHow={startDemo} onLogoClick={() => {}} />;
+  }
+
+  if (status === 'loading') {
+    return <LoadingScreen onComplete={enterBriefing} sessionId={sessionId} />;
   }
 
   if (status === 'briefing') {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { api } from '@/services/api';
+import { useEffect } from 'react';
+import { useDataStore } from '@/store/data';
 import type { Brief } from '@/types/domain';
 
 export interface UseCloseGuaranteeResult {
@@ -8,20 +8,20 @@ export interface UseCloseGuaranteeResult {
   error: string | null;
 }
 
+// Reads the brief from the data store. The LoadingScreen prefetches it before
+// CloseGuarantee mounts, so this normally returns ready data immediately. The
+// fallback fetch covers refreshes/deep links that skip the LoadingScreen.
 export function useCloseGuarantee(sessionId: string): UseCloseGuaranteeResult {
-  const [data, setData] = useState<Brief | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const brief        = useDataStore((s) => s.brief);
+  const briefLoading = useDataStore((s) => s.briefLoading);
+  const briefError   = useDataStore((s) => s.briefError);
+  const loadBrief    = useDataStore((s) => s.loadBrief);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    api
-      .getBrief(sessionId)
-      .then(setData)
-      .catch((err) => setError(String(err)))
-      .finally(() => setLoading(false));
-  }, [sessionId]);
+    if (brief === null && !briefLoading && briefError === null) {
+      void loadBrief(sessionId);
+    }
+  }, [sessionId, brief, briefLoading, briefError, loadBrief]);
 
-  return { data, loading, error };
+  return { data: brief, loading: briefLoading, error: briefError };
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '@/services/api';
 import type {
+  Brief,
   FinancialBrain,
   MatchedRecord,
   ReconciliationSession,
@@ -20,6 +21,11 @@ interface DataState {
   isLoading: boolean;
   error: string | null;
 
+  // AI brief — prefetched during the LoadingScreen so CloseGuarantee renders instantly.
+  brief: Brief | null;
+  briefLoading: boolean;
+  briefError: string | null;
+
   // Live close probability — initialized from brain on load, updated by applyResolve.
   closeProbability: number | null;
   // Snapshot at session open — used to compute the "↑ +N%" delta chip.
@@ -36,6 +42,7 @@ interface DataState {
   applyResolve: (result: ResolveResult) => void;
 
   loadAll: () => Promise<void>;
+  loadBrief: (sessionId: string) => Promise<void>;
 }
 
 export const useDataStore = create<DataState>((set) => ({
@@ -47,6 +54,9 @@ export const useDataStore = create<DataState>((set) => ({
   unmatchedCases: [],
   isLoading: false,
   error: null,
+  brief: null,
+  briefLoading: false,
+  briefError: null,
   closeProbability: null,
   initialCloseProbability: null,
 
@@ -80,6 +90,18 @@ export const useDataStore = create<DataState>((set) => ({
         matchedRecords: [...state.matchedRecords, synthetic],
       };
     }),
+
+  loadBrief: async (sessionId) => {
+    set({ briefLoading: true, briefError: null });
+    try {
+      const brief = await api.getBrief(sessionId);
+      set({ brief });
+    } catch (err) {
+      set({ briefError: String(err) });
+    } finally {
+      set({ briefLoading: false });
+    }
+  },
 
   loadAll: async () => {
     set({ isLoading: true, error: null });
