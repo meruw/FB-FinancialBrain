@@ -21,6 +21,11 @@
 }
 
 /* ── Typography ──────────────────────────────────────────────────────────────── */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #060316;
+}
 body {
   font-family: 'Mulish', 'Inter', system-ui, sans-serif;
 }

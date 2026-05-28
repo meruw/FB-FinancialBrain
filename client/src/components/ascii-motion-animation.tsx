@@ -33,7 +33,7 @@ const CELL_WIDTH = 10.8;
 const CELL_HEIGHT = 18;
 const FONT_SIZE = 18;
 const FONT_FAMILY = "SF Mono, Monaco, Cascadia Code, Consolas, JetBrains Mono, Fira Code, Monaspace Neon, Geist Mono, Courier New, monospace";
-const BACKGROUND_COLOR = "#000000";
+const BACKGROUND_COLOR: string | null = null;
 
 const AsciiMotionAnimation = (props: AsciiMotionComponentProps = {}) => {
   const { showControls = true, autoPlay = true, onReady } = props;
@@ -250,7 +250,7 @@ const AsciiMotionAnimation = (props: AsciiMotionComponentProps = {}) => {
         style={{
           width: CANVAS_WIDTH + 'px',
           height: CANVAS_HEIGHT + 'px',
-          backgroundColor: BACKGROUND_COLOR || 'transparent',
+          backgroundColor: BACKGROUND_COLOR ?? 'transparent',
           imageRendering: 'pixelated'
         }}
       />
