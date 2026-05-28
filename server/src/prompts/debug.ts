@@ -60,12 +60,12 @@ ${input.brain}
 Bank transaction that failed to match:
 ${JSON.stringify(input.bankTransaction, null, 2)}
 
-Failure reason recorded by matching engine: ${input.unmatchedCase.failureReason}
+AUTHORITATIVE FAILURE REASON (do not override — this is what the matching engine determined): ${input.unmatchedCase.failureReason}
 Matching engine details: ${input.unmatchedCase.details}
 
 ${sapSection}
 
-Diagnose this transaction now.
+Diagnose this transaction now. Your rootCause MUST match the authoritative failure reason above.
 `.trim();
 
   return { system, user };
