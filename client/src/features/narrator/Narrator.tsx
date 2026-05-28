@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { Typewriter } from '@/components/effects/Typewriter';
+import { NerveCellsAnimation } from '@/components/effects/NerveCellsAnimation';
 import { useNarrator } from './useNarrator';
 import { api } from '@/services/api';
 import type { NarrativeInsight, Narrative } from '@/types/domain';
@@ -89,10 +90,15 @@ export function Narrator() {
   const [copied, setCopied]                   = useState(false);
   const [pdfLoading, setPdfLoading]           = useState(false);
   const [pdfError, setPdfError]               = useState<string | null>(null);
+  // True for ~700ms after `loading` flips false — lets the nerve animation
+  // play its completion snap before the narrative content takes over.
+  const [completing, setCompleting]           = useState(false);
 
-  const fallbackRef  = useRef<number>(0);
-  const actionsRef   = useRef<number>(0);
-  const copyTimerRef = useRef<number>(0);
+  const fallbackRef    = useRef<number>(0);
+  const actionsRef     = useRef<number>(0);
+  const copyTimerRef   = useRef<number>(0);
+  const completeRef    = useRef<number>(0);
+  const wasLoadingRef  = useRef<boolean>(false);
 
   // Reset animation gates whenever generation fires
   useEffect(() => {
@@ -111,6 +117,23 @@ export function Narrator() {
     actionsRef.current = window.setTimeout(() => setActionsVisible(true), 600);
     return () => clearTimeout(actionsRef.current);
   }, [sectionsVisible]);
+
+  // Bridge loading → generated with a brief "network fills completely" beat.
+  // The nerve animation receives loading=false during this window so every
+  // dendrite races to 100%; once the beat ends, the narrative content renders.
+  useEffect(() => {
+    if (loading) {
+      wasLoadingRef.current = true;
+      setCompleting(false);
+      return;
+    }
+    if (wasLoadingRef.current && data) {
+      wasLoadingRef.current = false;
+      setCompleting(true);
+      completeRef.current = window.setTimeout(() => setCompleting(false), 700);
+      return () => clearTimeout(completeRef.current);
+    }
+  }, [loading, data]);
 
   // Cycle loading text while API call is in flight
   useEffect(() => {
@@ -208,21 +231,21 @@ export function Narrator() {
     );
   }
 
-  // ── 2. Loading state ──
-  if (loading) {
+  // ── 2. Loading state (and completion beat) ──
+  if (loading || completing) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4">
-        <Spinner />
+      <div className="flex h-full flex-col items-center justify-center gap-6 px-6">
+        <NerveCellsAnimation loading={loading} />
         <AnimatePresence mode="wait">
           <motion.p
-            key={loadingTextIdx}
+            key={completing ? 'complete' : loadingTextIdx}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.25 }}
-            className="text-xs text-gray-400"
+            transition={{ duration: 0.3 }}
+            className="text-[11px] uppercase tracking-[0.25em] text-gray-400"
           >
-            {LOADING_TEXTS[loadingTextIdx]}
+            {completing ? 'Audit ready' : LOADING_TEXTS[loadingTextIdx]}
           </motion.p>
         </AnimatePresence>
       </div>
