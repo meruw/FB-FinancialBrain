@@ -218,10 +218,29 @@ export default function LoadingScreen({
         className="relative z-10 flex flex-col items-center gap-6"
       >
         <div className="flex items-baseline gap-2 select-none">
-          <span className="text-5xl font-extrabold tracking-tight" style={{ color: PURPLE }}>
+          {/* fastbank sits in front; memories emerges from behind its right edge */}
+          <span
+            className="relative z-10 text-5xl font-extrabold tracking-tight"
+            style={{ color: PURPLE }}
+          >
             fast<span className="text-gray-900">bank</span>
           </span>
-          <span className="text-3xl font-light tracking-tight text-gray-700">memories</span>
+
+          {/* Clip container — keeps Memories invisible while it's still "behind" fastbank */}
+          <span className="relative inline-block overflow-hidden leading-[1.1]">
+            {/* Invisible spacer reserves the exact final width without layout shift */}
+            <span aria-hidden className="invisible text-4xl font-light tracking-tight">
+              Memories
+            </span>
+            <motion.span
+              initial={{ x: '-110%', opacity: 0 }}
+              animate={{ x: '0%', opacity: 1 }}
+              transition={{ delay: 1.0, duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 whitespace-nowrap text-4xl font-light tracking-tight text-gray-700"
+            >
+              Memories
+            </motion.span>
+          </span>
         </div>
 
         {/* Tiny breathing dot above status line */}
